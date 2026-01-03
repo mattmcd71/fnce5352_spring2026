@@ -1,0 +1,288 @@
+---
+title: "Lecture 1 — Intro to R, RStudio, and the Data Science Workflow"
+subtitle: "FNCE 5352 — Financial Programming & Modeling"
+author: "Matt McDonald"
+date: "Jan 20, 2026"
+format:
+  html:
+    toc: true
+    toc-location: left
+    number-sections: true
+    code-fold: true
+    code-summary: "Show code"
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+    geometry: margin=1in
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# Core packages for Part 1
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(glue)
+```
+
+# Plan for today (3 hours)
+
+> **Theme:** finance questions + reproducible workflow + tools that transfer (R ↔ Python)
+
+**Agenda (approx.)**
+- 0:00–0:10 Intro + course framing  
+- 0:10–0:35 Data science / modeling workflow (finance examples)  
+- 0:35–0:55 R vs Python portability  
+- 0:55–1:10 RStudio orientation + projects  
+- 1:10–1:20 **Break**  
+- 1:20–2:20 Hands-on workflow demo (AAPL + SPY)  
+- 2:20–2:30 **Break**  
+- 2:30–2:55 ISL Ch. 1: how we talk about models  
+- 2:55–3:00 Wrap + next steps
+
+---
+
+# Intro (me, quickly)
+
+- Background: stats + finance + building models in practice
+- What I care about: *making good decisions with imperfect information*
+
+**Bridge line:**  
+Most financial questions aren’t “what’s the right answer?” — they’re “what’s the best decision given noisy data and tradeoffs?”
+
+---
+
+# Course framing
+
+## What this course is / isn’t
+
+**Not:** “learn every algorithm”  
+**Is:** applied statistical learning for finance: regression, classification, interpretation, model assessment
+
+**Tools matter — but ideas transfer**
+- We’ll use **R** in Part 1 (my section), **Python** in Part 2 (Prof. Hayes)
+- You may complete assignments in **either** language
+- The goal is durable thinking + workflow
+
+---
+
+# The data science / modeling workflow (finance-first)
+
+We’ll return to this loop all semester:
+
+**Import → Tidy → Explore → Model → Communicate**
+
+## Finance examples by step
+
+- **Import:** prices/returns, fundamentals, loan tapes, macro series  
+- **Tidy:** dates, joins, missing data, panel structure  
+- **Explore:** distributions, correlations, regime changes  
+- **Model:** regression/classification to support decisions  
+- **Communicate:** plots + narrative + “so what?” for stakeholders
+
+---
+
+# R and Python: portability
+
+> **If you understand what we’re doing in R, you’ll recognize it instantly in Python.**
+
+Common “transferable” concepts:
+- data frames / tables
+- functions, objects, packages/libraries
+- wrangle → visualize → model → evaluate
+- train/test thinking (later)
+
+**Bridge line:**  
+So we’ll start in RStudio, build the workflow habits, and you’ll reuse the same mental model in Python later.
+
+---
+
+# RStudio orientation (minimum viable comfort)
+
+## R vs RStudio
+- **R** = the engine
+- **RStudio** = the interface (editor, console, plots, help, files)
+
+## Projects (strongly recommended)
+- Keep work in one folder
+- Relative paths
+- Reproducibility
+
+> Today we’ll read data from `data/aapl_spy.csv`.
+
+---
+
+# Hands-on: AAPL + SPY mini-workflow
+
+## Dataset expectation
+
+Place a CSV at:
+
+- `data/aapl_spy.csv`
+
+Recommended columns (any of these is fine; we’ll handle common variants):
+- `date` (YYYY-MM-DD)
+- `ticker` (AAPL / SPY)
+- `adj_close` **or** `close`
+- optional: `volume`
+
+---
+
+## Load + sanity-check
+
+```{r}
+#| label: load-data
+
+px_raw <- read_csv(here::here('Lecture1', 'aapl_spy.csv'))
+
+glimpse(px_raw)
+```
+
+## Standardize column names + types
+
+```{r}
+#| label: clean-data
+
+# Be forgiving about column naming conventions
+px <- px_raw %>%
+  rename_with(tolower) %>%
+  rename(
+    adj_close = any_of(c("adj_close", "adjusted", "adjusted_close", "adj.close", "adjclose")),
+    close     = any_of(c("close", "close_price", "closeprice"))
+  ) %>%
+  mutate(
+    date = as.Date(date),
+    ticker = as.character(ticker)
+  )
+
+# Choose a price column
+px <- px %>%
+  mutate(price = adj_close) %>%
+  select(date, ticker, price, everything())
+
+stopifnot(all(c("date","ticker","price") %in% names(px)))
+
+px %>% arrange(ticker, date) %>% slice_head(n = 5)
+```
+
+---
+
+## Explore: prices over time
+
+```{r}
+#| label: plot-prices
+
+px %>%
+  ggplot(aes(x = date, y = price, color = ticker)) +
+  geom_line(linewidth = 0.7) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(
+    title = "AAPL and SPY — Prices over time",
+    x = NULL, y = "Price"
+  )
+```
+
+**Discussion prompts (finance lens)**
+- What do you notice about scale differences?
+- What does “SPY” represent in most workflows?
+
+---
+
+## Transform: compute simple daily returns
+
+```{r}
+#| label: compute-returns
+
+ret <- px %>%
+  arrange(ticker, date) %>%
+  group_by(ticker) %>%
+  mutate(
+    ret = price / lag(price) - 1
+  ) %>%
+  ungroup()
+
+ret %>% filter(!is.na(ret)) %>% slice_head(n = 5)
+```
+
+---
+
+## Explore: return distributions
+
+```{r}
+#| label: plot-returns-hist
+
+ret %>%
+  filter(!is.na(ret)) %>%
+  ggplot(aes(x = ret, fill = ticker)) +
+  geom_histogram(bins = 60, alpha = 0.6, position = "identity") +
+  scale_x_continuous(labels = percent_format(accuracy = 0.1)) +
+  labs(
+    title = "Daily return distributions (simple returns)",
+    x = "Daily return", y = "Count"
+  )
+```
+
+**Micro-interpretation (write 2 sentences):**
+- Which looks “riskier” by eyeballing spread?
+- What might differ if we used log returns?
+
+---
+
+## Transform: “market model” teaser (optional)
+
+*This is not regression day — this is just to preview the kinds of questions we’ll answer later.*
+
+```{r}
+#| label: market-model-teaser
+
+wide <- ret %>%
+  select(date, ticker, ret) %>%
+  filter(!is.na(ret)) %>%
+  pivot_wider(names_from = ticker, values_from = ret)
+
+# Simple CAPM-style regression: AAPL ~ SPY
+fit <- lm(AAPL ~ SPY, data = wide)
+summary(fit)
+```
+
+**Interpretation prompt (no math):**
+- What does the slope *mean* in words?
+- If alpha is positive, what claim are we implicitly making?
+
+---
+
+# ISL Chapter 1 (conceptual)
+
+> **This chapter is about how we talk about models, not how we compute them.**
+
+## Vocabulary we’ll use all semester
+- **Statistical learning**
+- **Prediction vs inference**
+- **Training vs test performance** (intuition today; details soon)
+- **Overfitting** (why “looks great in-sample” can be a trap)
+- **Tradeoffs** (accuracy vs interpretability; complexity vs robustness)
+
+## Why finance makes this hard
+- noise + regimes + feedback loops
+- “truth” changes over time
+- the cost of mistakes can be asymmetric
+
+---
+
+# Wrap / next steps
+
+- Readings for next class: R4DS Sections 1–8; ISL Ch. 1 (conceptual)
+- Get comfortable running code:
+  - open the project
+  - run chunks
+  - change one thing and re-run
+- If you get stuck: bring the error + what you tried
+
+**Next class:** workflow + visualization (we’ll go deeper on exploring and telling the story with plots)
