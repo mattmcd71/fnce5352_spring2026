@@ -1,19 +1,32 @@
 ---
-title: "Lecture 1 — Intro to R, RStudio, and the Data Science Workflow"
+title: "Lecture 1: Intro to R, RStudio, and the Data Science Workflow"
 subtitle: "FNCE 5352 — Financial Programming & Modeling"
 author: "Matt McDonald"
-date: "Jan 20, 2026"
+date: "2026-01-20"
+
 format:
-  html:
-    toc: true
-    toc-location: left
-    number-sections: true
-    code-fold: true
-    code-summary: "Show code"
-    df-print: paged
+  revealjs:
+    theme: white
+    css: lecture1_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
   pdf:
-    toc: true
-    number-sections: true
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
     geometry: margin=1in
 execute:
   echo: true
@@ -24,265 +37,285 @@ execute:
 ```{r}
 #| label: setup
 #| include: false
-
-# Core packages for Part 1
 library(tidyverse)
 library(lubridate)
 library(scales)
 library(glue)
 ```
 
-# Plan for today (3 hours)
+# Intro
 
-> **Theme:** finance questions + reproducible workflow + tools that transfer (R ↔ Python)
+::: notes
+**Theme:** finance questions + reproducible workflow + tools that transfer (R ↔ Python)
 
 **Agenda (approx.)**
-- 0:00–0:10 Intro + course framing  
-- 0:10–0:35 Data science / modeling workflow (finance examples)  
-- 0:35–0:55 R vs Python portability  
-- 0:55–1:10 RStudio orientation + projects  
-- 1:10–1:20 **Break**  
-- 1:20–2:20 Hands-on workflow demo (AAPL + SPY)  
-- 2:20–2:30 **Break**  
-- 2:30–2:55 ISL Ch. 1: how we talk about models  
+- 0:00–0:10 Intro + course framing
+- 0:10–0:35 DS / modeling workflow (finance examples)
+- 0:35–0:55 R vs Python portability
+- 0:55–1:10 RStudio orientation + projects
+- 1:10–1:20 Break
+- 1:20–2:20 Hands-on workflow demo (AAPL + SPY)
+- 2:20–2:30 Break
+- 2:30–2:55 ISL Ch. 1: how we talk about models
 - 2:55–3:00 Wrap + next steps
+:::
 
----
+## {data-background-image="images/MattMcDonaldCV.png" data-background-size="contain" data-background-position="center" data-background-repeat="no-repeat"}
 
-# Intro (me, quickly)
+## {data-background-image="images/MDMCareerPath.png" data-background-size="contain" data-background-position="center" data-background-repeat="no-repeat"}
 
-- Background: stats + finance + building models in practice
-- What I care about: *making good decisions with imperfect information*
+# Course Framing
 
-**Bridge line:**  
-Most financial questions aren’t “what’s the right answer?” — they’re “what’s the best decision given noisy data and tradeoffs?”
+## The Core Idea
 
----
+**Most financial questions aren’t about the “right” answer.**
 
-# Course framing
+They’re about making the **best decision**  
+given **noise, uncertainty, and tradeoffs**.
 
-## What this course is / isn’t
+::: notes
+This is the thesis of the course.
+Pause after the first line.
+Emphasize that finance lives in uncertainty, not closed-form answers.
+Use this to pivot from “who I am” to “why this course is structured the way it is.”
+:::
 
-**Not:** “learn every algorithm”  
-**Is:** applied statistical learning for finance: regression, classification, interpretation, model assessment
+## What This Course Is — And Isn’t
 
-**Tools matter — but ideas transfer**
-- We’ll use **R** in Part 1 (my section), **Python** in Part 2 (Prof. Hayes)
-- You may complete assignments in **either** language
-- The goal is durable thinking + workflow
+**This course is not**
+- learning every algorithm
+- optimizing models for their own sake
 
----
+**This course is**
+- applied statistical learning for finance
+- regression and classification
+- interpretation and model assessment
+- understanding tradeoffs (accuracy vs robustness, simplicity vs flexibility)
 
-# The data science / modeling workflow (finance-first)
+::: notes
+Stress that depth of understanding matters more than breadth.
+This sets expectations early and lowers anxiety.
+:::
 
-We’ll return to this loop all semester:
+## Tools And Transfer
 
-**Import → Tidy → Explore → Model → Communicate**
+The **ideas** matter more than the language.
 
-## Finance examples by step
+- Part 1 uses **R** (lecture language)
+- Part 2 uses **Python**
+- Assignments may be completed in either language
+- The workflow and concepts transfer directly across both
 
-- **Import:** prices/returns, fundamentals, loan tapes, macro series  
-- **Tidy:** dates, joins, missing data, panel structure  
-- **Explore:** distributions, correlations, regime changes  
-- **Model:** regression/classification to support decisions  
-- **Communicate:** plots + narrative + “so what?” for stakeholders
+::: notes
+Reinforce portability: if they understand the workflow here,
+Python later should feel familiar rather than intimidating.
+:::
 
----
+# The Data Science And Modeling Workflow  
+*(Finance-First)*
 
-# R and Python: portability
+## The Workflow We Will Use All Semester
 
-> **If you understand what we’re doing in R, you’ll recognize it instantly in Python.**
+![](images/ModelingWorkflow.png){.r-stretch}
 
-Common “transferable” concepts:
-- data frames / tables
-- functions, objects, packages/libraries
-- wrangle → visualize → model → evaluate
-- train/test thinking (later)
+This is not a one-time sequence.  
+It’s a **loop** you will revisit constantly.
 
-**Bridge line:**  
-So we’ll start in RStudio, build the workflow habits, and you’ll reuse the same mental model in Python later.
+::: notes
+This is the backbone of the course.
+Everything we do in R this semester fits somewhere in this loop.
+Emphasize that we will cycle through it repeatedly, not march through it once.
+:::
 
----
+## Why This Is A Loop (Not A Checklist)
 
-# RStudio orientation (minimum viable comfort)
+- New data arrives
+- Assumptions change
+- Results raise new questions
+- Decisions require iteration
+
+In finance, the workflow rarely ends.
+
+::: notes
+Stress iteration and feedback.
+Connect to real-world finance: markets move, regimes change, models decay.
+This motivates reproducibility and disciplined workflows.
+:::
+
+## What Each Step Looks Like In Finance
+
+- **Import**  
+  Prices, returns, fundamentals, loan tapes, macro series  
+
+- **Tidy**  
+  Dates, joins, missing data, panel structure  
+
+- **Explore**  
+  Distributions, correlations, regime changes  
+
+- **Model**  
+  Regression and classification to support decisions  
+
+- **Communicate**  
+  Plots, narrative, and a clear “so what?”
+
+::: notes
+Walk through quickly.
+Reinforce that modeling is only one part of the workflow.
+Communication is where analysis becomes a decision.
+:::
+
+
+# R And Python: Portability
+
+## The Key Claim
+
+> **If you understand what we’re doing in R,  
+> you’ll recognize it instantly in Python.**
+
+::: notes
+Say this slowly and confidently.
+The goal is to reduce anxiety about the second half of the course.
+Emphasize that we are teaching ideas and workflows, not syntax trivia.
+:::
+
+## What Actually Transfers
+
+- Data frames / tables  
+- Functions, objects, and libraries  
+- Wrangle → visualize → model → evaluate  
+- Train / test thinking (coming soon)
+
+::: notes
+Point out that the *verbs* and *structure* stay the same.
+R syntax changes to Python syntax, but the workflow does not.
+This sets up Part 2 cleanly.
+:::
+
+# RStudio Orientation  
+*(Minimum Viable Comfort)*
 
 ## R vs RStudio
-- **R** = the engine
-- **RStudio** = the interface (editor, console, plots, help, files)
 
-## Projects (strongly recommended)
-- Keep work in one folder
-- Relative paths
-- Reproducibility
+- **R** = the engine  
+- **RStudio** = the interface  
 
-> Today we’ll read data from `data/aapl_spy.csv`.
+![](images/RvsRStudio.png){.r-stretch}
 
----
+::: notes
+Keep this high level.
+R is the language and computation engine.
+RStudio is the environment that makes R usable: editor, console, plots, files, help.
+Do not list features yet — this is orientation, not a tour.
+:::
 
-# Hands-on: AAPL + SPY mini-workflow
+## Packages
 
-## Dataset expectation
+![](images/RPackagesAsApps.png){.r-stretch}
 
-Place a CSV at:
+::: notes
+Use the phone analogy here.
 
-- `data/aapl_spy.csv`
+R by itself is like a new phone:
+- it turns on
+- it can do a few basic things
+- but it isn’t very useful yet
 
-Recommended columns (any of these is fine; we’ll handle common variants):
-- `date` (YYYY-MM-DD)
-- `ticker` (AAPL / SPY)
-- `adj_close` **or** `close`
-- optional: `volume`
+Packages are the apps you install on the phone.
+install.packages() is downloading an app.
+library() is opening the app.
 
----
+Most of what we do this semester is learning:
+- which “apps” to use
+- and when to use them.
+:::
 
-## Load + sanity-check
+## Projects (Strongly Recommended)
 
-```{r}
-#| label: load-data
+- One folder per project  
+- Relative paths  
+- Easier reproducibility  
 
-px_raw <- read_csv(here::here('Lecture1', 'aapl_spy.csv'))
+::: notes
+Emphasize that projects prevent path problems.
+This sets up why data lives in data/ and why here::here() exists later.
+Students don’t need to understand this deeply yet — just accept it.
+:::
 
-glimpse(px_raw)
-```
+## RStudio Walkthrough (Live)
 
-## Standardize column names + types
+::: notes
+This is a live, interactive walkthrough.
+Show the four panes:
+- Source (scripts)
+- Console (where code runs)
+- Environment / History
+- Files / Plots / Packages / Help
 
-```{r}
-#| label: clean-data
+Demonstrate:
+- creating a new script
+- running a single line (Cmd/Ctrl + Enter)
+- running multiple lines
+- clearing the console
+- where plots appear
+- where errors show up
 
-# Be forgiving about column naming conventions
-px <- px_raw %>%
-  rename_with(tolower) %>%
-  rename(
-    adj_close = any_of(c("adj_close", "adjusted", "adjusted_close", "adj.close", "adjclose")),
-    close     = any_of(c("close", "close_price", "closeprice"))
-  ) %>%
-  mutate(
-    date = as.Date(date),
-    ticker = as.character(ticker)
-  )
+Keep this informal.
+Encourage students to follow along.
+Reassure them that it’s normal to feel lost at first.
+:::
 
-# Choose a price column
-px <- px %>%
-  mutate(price = adj_close) %>%
-  select(date, ticker, price, everything())
+# Hands-On Workflow Demo  
+*(AAPL + SPY)*
 
-stopifnot(all(c("date","ticker","price") %in% names(px)))
+## Live Coding In RStudio
 
-px %>% arrange(ticker, date) %>% slice_head(n = 5)
-```
+::: notes
+Switch from slides to RStudio here.
 
----
+Follow the workflow explicitly:
+- Import: read aapl_spy.csv
+- Tidy: clean columns, dates, and structure
+- Explore: prices over time
+- Transform: compute daily returns
+- Explore again: return distributions
+- (Optional teaser) Model: simple market regression
 
-## Explore: prices over time
+Narrate what you’re doing and why.
+Do not rush.
+Encourage students to follow along, but reassure them they don’t need to type everything perfectly.
 
-```{r}
-#| label: plot-prices
+This is where the workflow slide comes to life.
+:::
 
-px %>%
-  ggplot(aes(x = date, y = price, color = ticker)) +
-  geom_line(linewidth = 0.7) +
-  scale_y_continuous(labels = dollar_format()) +
-  labs(
-    title = "AAPL and SPY — Prices over time",
-    x = NULL, y = "Price"
-  )
-```
+## What We Just Did
 
-**Discussion prompts (finance lens)**
-- What do you notice about scale differences?
-- What does “SPY” represent in most workflows?
+![](images/ModelingWorkflow.png){.r-stretch}
 
----
+::: notes
+Re-anchor everything to the workflow loop.
+Point out that modeling will come later.
+:::
 
-## Transform: compute simple daily returns
-
-```{r}
-#| label: compute-returns
-
-ret <- px %>%
-  arrange(ticker, date) %>%
-  group_by(ticker) %>%
-  mutate(
-    ret = price / lag(price) - 1
-  ) %>%
-  ungroup()
-
-ret %>% filter(!is.na(ret)) %>% slice_head(n = 5)
-```
-
----
-
-## Explore: return distributions
-
-```{r}
-#| label: plot-returns-hist
-
-ret %>%
-  filter(!is.na(ret)) %>%
-  ggplot(aes(x = ret, fill = ticker)) +
-  geom_histogram(bins = 60, alpha = 0.6, position = "identity") +
-  scale_x_continuous(labels = percent_format(accuracy = 0.1)) +
-  labs(
-    title = "Daily return distributions (simple returns)",
-    x = "Daily return", y = "Count"
-  )
-```
-
-**Micro-interpretation (write 2 sentences):**
-- Which looks “riskier” by eyeballing spread?
-- What might differ if we used log returns?
-
----
-
-## Transform: “market model” teaser (optional)
-
-*This is not regression day — this is just to preview the kinds of questions we’ll answer later.*
-
-```{r}
-#| label: market-model-teaser
-
-wide <- ret %>%
-  select(date, ticker, ret) %>%
-  filter(!is.na(ret)) %>%
-  pivot_wider(names_from = ticker, values_from = ret)
-
-# Simple CAPM-style regression: AAPL ~ SPY
-fit <- lm(AAPL ~ SPY, data = wide)
-summary(fit)
-```
-
-**Interpretation prompt (no math):**
-- What does the slope *mean* in words?
-- If alpha is positive, what claim are we implicitly making?
-
----
 
 # ISL Chapter 1 (conceptual)
 
 > **This chapter is about how we talk about models, not how we compute them.**
 
 ## Vocabulary we’ll use all semester
-- **Statistical learning**
-- **Prediction vs inference**
-- **Training vs test performance** (intuition today; details soon)
-- **Overfitting** (why “looks great in-sample” can be a trap)
-- **Tradeoffs** (accuracy vs interpretability; complexity vs robustness)
 
-## Why finance makes this hard
-- noise + regimes + feedback loops
-- “truth” changes over time
-- the cost of mistakes can be asymmetric
+- statistical learning
+- prediction vs inference
+- training vs test performance (intuition today)
+- overfitting (why “looks great in-sample” can be a trap)
+- tradeoffs (accuracy vs interpretability; complexity vs robustness)
 
----
+# Wrap Up
 
-# Wrap / next steps
+## {data-background-image="images/HowToAccessGit.png" data-background-size="contain" data-background-position="center" data-background-repeat="no-repeat"}
 
-- Readings for next class: R4DS Sections 1–8; ISL Ch. 1 (conceptual)
-- Get comfortable running code:
-  - open the project
-  - run chunks
-  - change one thing and re-run
-- If you get stuck: bring the error + what you tried
+## Next Steps
 
-**Next class:** workflow + visualization (we’ll go deeper on exploring and telling the story with plots)
+- Read: R4DS Sections 1–8
+- Read: ISL Chapter 1 (conceptual)
+- Make sure you can run code and re-render slides
