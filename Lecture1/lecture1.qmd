@@ -7,7 +7,7 @@ date: "2026-01-20"
 format:
   revealjs:
     theme: white
-    css: lecture1_minimal.css
+    css: course_minimal.css
     slide-number: true
     navigation-mode: linear
     transition: fade
