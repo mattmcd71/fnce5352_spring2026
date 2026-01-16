@@ -1,0 +1,36 @@
+---
+title: "Modeling With R and the Tidyverse"
+author: "Matthew McDonald"
+format: 
+  revealjs:
+    slide-number: true
+editor: visual
+---
+
+## Materials
+
+-   Materials are available on github
+
+    -   <https://github.com/mattmcd71/fnce5352_spring2025>
+
+## Modeling Workflow
+
+![](img/model-workflow.png)
+
+## Tidyverse
+
+![](img/tidyverse.png)
+
+## Help on the Tidyverse
+
+-   Rstudio Cheat Sheets!
+
+    -   <https://www.rstudio.com/resources/cheatsheets/>
+
+-   R for Data Science
+
+    -   <http://r4ds.had.co.nz/>
+
+-   Feature Engineering and Selection
+
+    -   <https://bookdown.org/max/FES/>
