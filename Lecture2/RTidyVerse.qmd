@@ -1,5 +1,6 @@
 ---
-title: "Modeling With R and the Tidyverse"
+title: "Modeling with R and the Tidyverse"
+subtitle: "Tidy Data, Exploration, and Pre-Modeling Thinking"
 author: "Matthew McDonald"
 format: 
   revealjs:
@@ -9,28 +10,105 @@ editor: visual
 
 ## Materials
 
--   Materials are available on github
+- Course materials and code:
+  - https://github.com/mattmcd71/fnce5352_spring2025
 
-    -   <https://github.com/mattmcd71/fnce5352_spring2025>
+- This lecture:
+  - **Master conceptual deck for Lecture 2**
+  - Implementation details live in supporting decks and demo scripts
 
-## Modeling Workflow
+::: notes
+This is the organizing lecture.
+Transform and visualize decks are references and deep dives.
+:::
+
+## Where We Are in the Workflow
 
 ![](img/model-workflow.png)
 
-## Tidyverse
+- Import → **Tidy → Explore** → Model → Communicate
+- Today: **Tidy + Explore**
+- Modeling comes *next*
+
+::: notes
+Lecture 1 framed the workflow.
+Lecture 2 fills in the most commonly skipped steps.
+:::
+
+## What Modeling Textbooks Assume
+
+- Observations are well-defined
+- Variables are clearly represented
+- Data is already analysis-ready
+
+::: notes
+This is usually unstated in ISLR.
+We are making the assumption explicit.
+:::
+
+## What This Course Makes Explicit
+
+- Data must be:
+  - tidy
+  - interpretable
+  - transformed with intent
+- Visualization is not decoration
+  - it is informal model assessment
+
+::: notes
+This is the intellectual justification for today.
+:::
+
+## Tidy Data as Modeling Infrastructure
 
 ![](img/tidyverse.png)
 
-## Help on the Tidyverse
+- One observation per row
+- One variable per column
+- One dataset per analytical unit
 
--   Rstudio Cheat Sheets!
+::: notes
+This maps directly to ISLR’s notion of observations and predictors.
+:::
 
-    -   <https://www.rstudio.com/resources/cheatsheets/>
+## The Role of the Tidyverse
 
--   R for Data Science
+- Tools for:
+  - transforming raw data into predictors
+  - structuring datasets for modeling
+  - exploring relationships *before* fitting models
+- Focused on clarity and workflow, not cleverness
 
-    -   <http://r4ds.had.co.nz/>
+::: notes
+We are not optimizing.
+We are preparing to think clearly.
+:::
 
--   Feature Engineering and Selection
+## Supporting Material
 
-    -   <https://bookdown.org/max/FES/>
+- **Data Transformation**
+  - constructing variables and comparisons
+- **Data Visualization**
+  - understanding distributions and relationships
+- Live demos:
+  - AAPL + SPY for continuity
+
+::: notes
+We will move between this deck and those decks.
+This deck is the spine.
+:::
+
+## References
+
+- RStudio Cheat Sheets  
+  https://www.rstudio.com/resources/cheatsheets/
+
+- *R for Data Science*  
+  https://r4ds.had.co.nz/
+
+- *Feature Engineering and Selection*  
+  https://bookdown.org/max/FES/
+
+::: notes
+These are tools and references, not required reading.
+:::
