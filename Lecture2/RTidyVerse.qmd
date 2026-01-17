@@ -1,114 +1,163 @@
 ---
-title: "Modeling with R and the Tidyverse"
-subtitle: "Tidy Data, Exploration, and Pre-Modeling Thinking"
+title: "Thinking with Data in R"
+subtitle: "Tidy Data, Transformation, and Exploration"
 author: "Matthew McDonald"
-format: 
+resources:
+  - course_minimal.css
+format:
   revealjs:
+    theme: white
+    css: course_minimal.css
     slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute:
+  echo: true
+  warning: false
+  message: false
 editor: visual
 ---
-
-## Materials
-
-- Course materials and code:
-  - https://github.com/mattmcd71/fnce5352_spring2025
-
-- This lecture:
-  - **Master conceptual deck for Lecture 2**
-  - Implementation details live in supporting decks and demo scripts
-
-::: notes
-This is the organizing lecture.
-Transform and visualize decks are references and deep dives.
-:::
 
 ## Where We Are in the Workflow
 
 ![](img/model-workflow.png)
 
-- Import → **Tidy → Explore** → Model → Communicate
-- Today: **Tidy + Explore**
-- Modeling comes *next*
+-   Import → Tidy → **Visualize → Transform** → Model 
+-   Today: **Visualize → Transform**
+-   Modeling comes later
 
 ::: notes
-Lecture 1 framed the workflow.
-Lecture 2 fills in the most commonly skipped steps.
+Lecture 1 framed the overall data science workflow. Lecture 2 focuses on the parts that are most often skipped or rushed.
 :::
 
-## What Modeling Textbooks Assume
+## What Analysis Textbooks Assume
 
-- Observations are well-defined
-- Variables are clearly represented
-- Data is already analysis-ready
+-   observations are well-defined
+-   variables are clearly represented
+-   data is already analysis-ready
 
 ::: notes
-This is usually unstated in ISLR.
-We are making the assumption explicit.
+This assumption is usually implicit in textbooks like ISLR. We are making it explicit so we can address it directly.
 :::
 
 ## What This Course Makes Explicit
 
-- Data must be:
-  - tidy
-  - interpretable
-  - transformed with intent
-- Visualization is not decoration
-  - it is informal model assessment
+-   data must be:
+    -   tidy
+    -   interpretable
+    -   constructed with intent
+-   visualization is a thinking tool
+    -   not decoration
 
 ::: notes
-This is the intellectual justification for today.
+Most of the real intellectual work happens before formal analysis. This lecture explains what that work looks like.
 :::
 
-## Tidy Data as Modeling Infrastructure
+## What Is the Tidyverse?
 
 ![](img/tidyverse.png)
 
-- One observation per row
-- One variable per column
-- One dataset per analytical unit
+-   opinionated collection of R packages
+-   consistent data structures and verbs
+-   designed for data preparation and exploration
 
 ::: notes
-This maps directly to ISLR’s notion of observations and predictors.
+The tidyverse is a coherent ecosystem, not a random set of packages. Its consistency lowers cognitive overhead and supports clear analytical thinking.
 :::
 
 ## The Role of the Tidyverse
 
-- Tools for:
-  - transforming raw data into predictors
-  - structuring datasets for modeling
-  - exploring relationships *before* fitting models
-- Focused on clarity and workflow, not cleverness
+-   structuring data for analysis
+-   constructing meaningful variables
+-   exploring patterns and variation
 
 ::: notes
-We are not optimizing.
-We are preparing to think clearly.
+The tidyverse supports thinking clearly about data. It prepares inputs for later analysis rather than performing modeling itself.
 :::
 
-## Supporting Material
+## ISLR’s View of Data
 
-- **Data Transformation**
-  - constructing variables and comparisons
-- **Data Visualization**
-  - understanding distributions and relationships
-- Live demos:
-  - AAPL + SPY for continuity
+-   observations
+-   variables
+-   outcomes
 
 ::: notes
-We will move between this deck and those decks.
-This deck is the spine.
+ISLR presents data as rows and columns: observations with associated variables and outcomes. It treats this structure as given.
 :::
 
-## References
+## What ISLR Leaves Unsaid
 
-- RStudio Cheat Sheets  
-  https://www.rstudio.com/resources/cheatsheets/
-
-- *R for Data Science*  
-  https://r4ds.had.co.nz/
-
-- *Feature Engineering and Selection*  
-  https://bookdown.org/max/FES/
+-   how observations are defined
+-   how variables are constructed
+-   how datasets are assembled
 
 ::: notes
-These are tools and references, not required reading.
+In practice, these steps take most of the time. In finance, aligning time series and defining units of analysis are nontrivial decisions.
+:::
+
+## Tidy Data Defines Observations
+
+-   what does one row represent?
+-   what is the unit of analysis?
+-   what comparisons are valid?
+
+::: notes
+Tidy data forces us to be explicit about what an observation is. If you cannot explain what one row represents, you cannot reason clearly about the data.
+:::
+
+## Transformation Creates Variables
+
+-   variables are constructed, not given
+-   scale and representation matter
+-   transformations encode meaning
+
+::: notes
+Prices become returns, levels become changes, and time becomes lags or aggregates. These are analytical choices, not mechanical steps.
+:::
+
+## Exploration Reveals Structure
+
+-   distributions and scale
+-   relationships between variables
+-   variation across time and groups
+
+::: notes
+Before formal analysis, we look. Plots help us understand what varies, what is related, and what is unusual.
+:::
+
+## How These Pieces Fit Together
+
+-   tidy data clarifies observations
+-   transformation defines variables
+-   exploration builds intuition
+
+::: notes
+These steps form an iterative loop. We often reshape, transform, and explore repeatedly as understanding improves.
+:::
+
+## How We’ll Spend the Rest of Today
+
+-   exploratory visualization
+-   data wrangling and transformation
+-   revisiting questions with cleaner structure
+
+::: notes
+We will first focus on visualization to see what questions arise. Then we will work on transforming and restructuring data to support those questions.
 :::

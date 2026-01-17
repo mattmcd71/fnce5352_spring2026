@@ -1,0 +1,95 @@
+---
+title: "Loan Amortization"
+author: "Matthew McDonald"
+format:
+  revealjs:
+    theme: white
+    css: course_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute: 
+  echo: true
+  eval: true
+  warning: false
+editor: visual
+---
+
+## A Simple Amortization
+
+::::: columns
+::: {.column width="50%"}
+-   For the simplest loans (fixed/constant rate, fully amortizing), you only need 3 pieces of information:
+
+    -   Starting Balance
+
+    -   Term
+
+    -   (Flat) Interest Rate
+
+-   Think in terms of a ledger --\>
+:::
+
+::: {.column width="50%"}
+![](img/AmortLegder.png){width="80%"}
+:::
+:::::
+
+## Excel Worksheet Functions
+
+-   PMT
+
+-   IPMT
+
+-   PPMT
+
+-   FV
+
+-   PV
+
+::: callout-note
+Drag the equations down the Excel spreadsheet to fully amortize the loan
+:::
+
+## Function Formulas {.smaller}
+
+$$monthly\;payment = pmt = \frac{rate}{1 - (1 + rate)^{-term}} * balance $$
+
+$$monthly\;interest\;payment = ipmt_{t} = balance_{t} * rate$$
+
+$$monthly\;principal\;payment = ppmt_{t} = pmt - ipmt_{t}$$
+
+$$ending\;balance = baleop_{t} = balance_{t} - ppmt_{t} = balance_{t + 1} $$
+
+## Floating Rates
+
+Constant Rate: $$pmt = \frac{rate}{1 - (1 + rate)^{-term_{0}}} * balance_{0}$$
+
+Variable Rate: $$pmt_{t} = \frac{rate_{t}}{1 - (1 + rate_{t})^{-term_{t}}} * balance_{t}$$
+
+## Day Counting Conventions {.smaller}
+
+Day counting convention impacts the conversion of annual rate to monthly rate
+
+30/360: $$rate_{monthly}=rate_{annual} * \left(\frac{30}{360}\right) = \frac{rate_{annual}}{12}$$
+
+Actual/360: $$rate_{monthly}=rate_{annual} * \left(\frac{days\;in\;month}{360}\right)$$
+
+Actual/Actual: $$rate_{monthly}=rate_{annual} * \left(\frac{days\;in\;month}{days\;in\;year}\right)$$
