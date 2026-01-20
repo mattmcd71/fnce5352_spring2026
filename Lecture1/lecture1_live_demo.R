@@ -49,7 +49,10 @@ x
 
 # A vector (a collection of values)
 y <- c(1, 2, 3, 4, 5)
+# you also might see 1:5
 y
+
+# what if we add x + y?
 
 # Create a sequence
 seq(from = 0, to = 10, by = 2)
@@ -201,31 +204,23 @@ wide <- ret |>
 fit <- lm(AAPL ~ SPY, data = wide)
 summary(fit)
 
+# R
+# scatter AAPL ~ SPY with semi-transparent points and the line from `fit`
+p <- wide |>
+  ggplot(aes(x = SPY, y = AAPL)) +
+  geom_point(alpha = 0.4, size = 1.8, color = "steelblue") +
+  geom_abline(
+    intercept = coef(fit)[1],
+    slope     = coef(fit)[2],
+    color     = "darkred",
+    linewidth = 0.8
+  ) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  labs(title = "AAPL vs SPY — Daily Returns", x = "SPY daily return", y = "AAPL daily return") +
+  theme_minimal()
 
-# -----------------------------
-# 6) Mini exercise ideas (optional)
-# -----------------------------
-# These are meant to be simple modifications students can try.
-
-# Exercise A:
-# Filter to a single year and remake the histogram.
-# ret_2024 <- ret |>
-#   filter(date >= as.Date("2024-01-01"), date <= as.Date("2024-12-31"))
-#
-# ret_2024 |>
-#   filter(!is.na(ret)) |>
-#   ggplot(aes(x = ret, fill = ticker)) +
-#   geom_histogram(bins = 60, alpha = 0.6, position = "identity") +
-#   scale_x_continuous(labels = percent_format(accuracy = 0.1)) +
-#   labs(title = "Daily Returns in 2024", x = "Daily return", y = "Count")
-
-# Exercise B:
-# Find the worst 5 AAPL daily returns.
-# ret |>
-#   filter(ticker == "AAPL", !is.na(ret)) |>
-#   arrange(ret) |>
-#   slice_head(n = 5)
-
+p
 
 # -----------------------------
 # 7) Cleanup (optional)

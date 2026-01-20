@@ -64,8 +64,6 @@ library(glue)
 
 ## {data-background-image="images/MDMCareerPath.png" data-background-size="contain" data-background-position="center" data-background-repeat="no-repeat"}
 
-# Course Framing
-
 ## The Core Idea
 
 **Most financial questions aren’t about the “right” answer.**
@@ -112,7 +110,6 @@ Python later should feel familiar rather than intimidating.
 :::
 
 # The Data Science And Modeling Workflow  
-*(Finance-First)*
 
 ## The Workflow We Will Use All Semester
 
@@ -193,7 +190,7 @@ This sets up Part 2 cleanly.
 :::
 
 # RStudio Orientation  
-*(Minimum Viable Comfort)*
+
 
 ## R vs RStudio
 
@@ -264,6 +261,8 @@ Keep this informal.
 Encourage students to follow along.
 Reassure them that it’s normal to feel lost at first.
 :::
+
+## Positron
 
 # Hands-On Workflow Demo  
 *(AAPL + SPY)*
