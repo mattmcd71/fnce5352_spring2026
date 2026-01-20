@@ -1,0 +1,286 @@
+---
+title: "Statistical Learning"
+subtitle: "Concepts + vocabulary to set up Modeling"
+author: "Matthew McDonald"
+format:
+  revealjs:
+    theme: white
+    css: course_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+    html-math-method: mathjax
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute:
+  echo: true
+  eval: true
+  warning: false
+editor: source
+---
+
+## Statistical learning
+
+**Statistical learning**: use data to learn a relationship between inputs \(X\) and an outcome \(Y\).
+
+- Outcome / response / target: **Y**
+- Inputs / features / predictors: **X = (X1, X2, …, Xp)**
+
+::: notes
+Keep it human: “We want to map from information we have → quantity we care about.”
+In finance: predictors might be market returns, factors, lagged returns, spreads, macro indicators, etc.
+:::
+
+---
+
+## Two reasons we build models
+
+### 1) Prediction
+- “What do I expect *next*?”
+- Accuracy matters most
+
+### 2) Inference (explanation / interpretation)
+- “Which inputs matter, and how?”
+- Clarity + assumptions matter
+
+::: notes
+Emphasize: same tools, different goals.
+Finance examples:
+- prediction: forecast returns / default / volatility
+- inference: understand what drives returns/spreads; factor importance
+:::
+
+---
+
+## A helpful picture
+
+![](img/ad_sales.png){width=80%}
+
+- “Maybe we can do better than separate lines”
+- Goal: learn $f(X)$ so $Y \approx f(X)$
+
+---
+
+## The model-as-approximation view
+
+We often write:
+
+$Y = f(X) + \varepsilon$
+
+- $f(\cdot)$: the *signal* / systematic component
+- $\varepsilon$: noise, measurement error, missing variables (irreducible)
+
+::: notes
+This is the cleanest conceptual statement of modeling.
+In finance: “even with perfect predictors, markets are noisy.”
+Avoid deriving anything.
+:::
+
+---
+
+## Supervised vs unsupervised
+
+### Supervised learning
+- We observe **X** and **Y**
+- Learn a rule to map X → Y
+
+Examples:
+- Regression (Y numeric)
+- Classification (Y category)
+
+### Unsupervised learning
+- We observe **X** only
+- Find structure: clusters, factors, embeddings, etc.
+
+::: notes
+Keep it 2 minutes. Purpose is vocabulary.
+Mention: unsupervised shows up later in finance as clustering firms, PCA on returns, etc.
+:::
+
+---
+
+## Regression vs classification
+
+### Regression
+- Y is **quantitative**
+- e.g., return, spread, volatility, loss given default
+
+### Classification
+- Y is **qualitative**
+- e.g., default / no-default, upgrade / downgrade, “risk-on” / “risk-off”
+
+::: notes
+This is where students often realize: “Oh classification is a model too.”
+You can mention logistic regression is coming later, but don’t teach it.
+:::
+
+---
+
+## Parametric vs non-parametric (the big choice)
+
+### Parametric
+- Assume a functional form
+- Estimate a small number of parameters  
+  (e.g., linear regression)
+
+### Non-parametric
+- Fewer shape assumptions
+- More flexible; can track complex patterns  
+  (but needs more data)
+
+::: notes
+Translate: parametric = “structure up front”
+non-parametric = “let the data decide”
+Tie to finance: linear factor models are parametric; kNN is non-parametric.
+:::
+
+---
+
+## The real trade-off
+
+:::: columns
+::: {.column width="40%"}
+
+**Flexibility vs interpretability**
+
+- More flexible methods can fit more patterns
+- But they become harder to explain
+- And can overfit
+
+:::
+
+::: {.column width="60%"}
+
+![](img/flex_interp.png){width=100%}
+
+:::
+::::
+
+::: notes
+This is an anchor slide. Use the ISLR figure.
+Message: “We start with linear regression because it’s interpretable and a solid baseline.”
+:::
+
+---
+
+## A metric we’ll use a lot: MSE
+
+Mean Squared Error (MSE):
+
+$$
+\mathrm{MSE}=\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat{y}_i)^2
+$$
+
+- Penalizes large errors more than small errors
+- Convenient, common, and easy to compute
+- Works naturally for regression
+
+::: notes
+You can say: “average squared miss.”
+Make the point: MSE is one of many metrics; we start here for simplicity.
+:::
+
+---
+
+## Overfitting 
+
+- A model can fit training data *too* well
+- “Great in-sample” ≠ “good out-of-sample”
+
+::: notes
+Use the education/seniority surface progression (or the 1D wiggly fits).
+The key is the story: increasing flexibility improves training fit, but can hurt generalization.
+:::
+
+---
+
+## Three Examples
+
+:::: columns
+::: {.column width="50%"}
+
+![](img/overfit.png){width=100%}
+
+:::
+
+::: {.column width="50%"}
+
+![](img/overfit2.png){width=100%}
+![](img/overfit3.png){width=100%}
+
+:::
+::::
+
+---
+
+## Bias–variance trade-off (intuition)
+:::: columns
+::: {.column width="50%"}
+Test error reflects:
+
+- **Bias**: too rigid / systematically wrong
+
+- **Variance**: too wiggly / too sensitive to sample
+
+As flexibility increases:
+
+- bias typically ↓
+
+- variance typically ↑
+:::
+::: {.column width="50%"}
+![](img/bias_variance.png){width=100%}
+:::
+::::
+
+::: notes
+Say: “This is the recurring theme of the whole course.”
+Tie back to interpretability: simpler models often have higher bias but lower variance.
+:::
+
+---
+
+## Choosing flexibility: the practical punchline
+
+- There is no “best model” in the abstract
+- The best model depends on:
+  - the true relationship (unknown)
+  - noise level
+  - sample size
+  - purpose (prediction vs inference)
+- **We choose flexibility using out-of-sample thinking**
+
+::: notes
+This is the “adult” message: model choice is a decision under uncertainty.
+:::
+
+---
+
+## Classification: what changes?
+
+- Output is a **label**
+- We evaluate with metrics like:
+  - misclassification rate / accuracy
+  - later: precision/recall, ROC/AUC
+
+::: notes
+Only do this if time allows.
+The point is: the same overfitting story appears in classification too.
+:::
+
+---
