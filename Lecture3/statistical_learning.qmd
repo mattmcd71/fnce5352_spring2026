@@ -74,6 +74,14 @@ Finance examples:
 - “Maybe we can do better than separate lines”
 - Goal: learn $f(X)$ so $Y \approx f(X)$
 
+::: notes
+Sales (Y) vs ad spend (X) by channel: TV, Radio, Newspaper.
+Each dot = one market/time period (one observation).
+TV shows strongest + relationship; Radio weaker/noisier; Newspaper ~ weak.
+Point: univariate views are helpful, but predictors may overlap—eventually we model jointly.
+:::
+
+
 ---
 
 ## The model-as-approximation view
@@ -189,6 +197,7 @@ $$
 - Penalizes large errors more than small errors
 - Convenient, common, and easy to compute
 - Works naturally for regression
+- **Units:** MSE is in **(units of $Y$)$^2$**; RMSE is in the **same units as $Y$**
 
 ::: notes
 You can say: “average squared miss.”
@@ -209,6 +218,40 @@ The key is the story: increasing flexibility improves training fit, but can hurt
 
 ---
 
+## Flexibility vs Performance
+
+:::: columns
+::: {.column width="55%"}
+
+![](img/overfit.png){width=100%}
+
+:::
+
+::: {.column width="45%"}
+
+**Left panel:** data + fits  
+- points = observed data  
+- straight line = **rigid** (high bias)  
+- smoother curves = **more flexible**  
+- very wiggly = **overfit** (high variance)
+
+**Right panel:** error vs flexibility  
+- gray = **training (in-sample)** error ↓  
+- red = **test (out-of-sample)** error is often **U-shaped**  
+- choose flexibility near the **red minimum**
+
+:::
+::::
+
+::: notes
+Say: “This is two plots about the same set of models.”
+Left: same data, different flexibility.
+Right: performance of those same models on training vs test.
+Key message: training error keeps improving, but test error doesn’t.
+We care about the red curve (generalization), not the gray curve (fit-to-history).
+:::
+
+
 ## Three Examples
 
 :::: columns
@@ -225,6 +268,22 @@ The key is the story: increasing flexibility improves training fit, but can hurt
 
 :::
 ::::
+
+::: notes
+Now we’re seeing the same story three times:
+
+- Each row/column is a different underlying “true” relationship / noise level.
+- LEFT: points + candidate models (rigid → flexible).
+- RIGHT: training error (gray) keeps dropping; test error (red) is U-shaped.
+
+Why three?
+- The location of the best flexibility (red minimum) depends on:
+  - how nonlinear the true relationship is
+  - how noisy the data is
+  - sample size
+
+Punchline: there’s no universally best flexibility—choose it using out-of-sample thinking.
+:::
 
 ---
 
@@ -282,5 +341,3 @@ This is the “adult” message: model choice is a decision under uncertainty.
 Only do this if time allows.
 The point is: the same overfitting story appears in classification too.
 :::
-
----

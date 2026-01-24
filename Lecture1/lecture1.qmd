@@ -64,6 +64,8 @@ library(glue)
 
 ## {data-background-image="images/MDMCareerPath.png" data-background-size="contain" data-background-position="center" data-background-repeat="no-repeat"}
 
+## Class Syllabus
+
 ## The Core Idea
 
 **Most financial questions aren’t about the “right” answer.**

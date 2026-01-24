@@ -49,6 +49,8 @@ x
 
 # A vector (a collection of values)
 y <- c(1, 2, 3, 4, 5)
+c(1, 2, 3, 4, 5) -> y
+
 # you also might see 1:5
 y
 

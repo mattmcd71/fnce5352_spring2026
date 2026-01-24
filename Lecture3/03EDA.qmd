@@ -42,21 +42,67 @@ EDA is an iterative cycle.
 
 - Use what you learn to refine your questions and/or generate new questions.
 
+## Translating EDA to finance
+
+:::: columns
+::: {.column width="50%"}
+
+**Common units of observation**
+
+- **stock-day**: price, return, volume  
+- **firm-quarter**: statements + ratios  
+- **bond-day**: price, spread, duration
+
+:::
+
+::: {.column width="50%"}
+
+**Common categorical variables**
+
+- sector / industry
+- rating bucket (AAA…CCC)
+- country / region / exchange
+- size bucket (micro…large)
+- event flags (earnings week, macro day)
+
+:::
+::::
+
+::: notes
+60–90 second bridge.
+Point: same EDA tools; different “units of observation” and categories.
+Callback: “Tidy data defines observations—this is what that means in finance.”
+:::
+
 ## Questions
 
 Your goal during EDA is to develop an understanding of your data.
 
-The easiest way to do this is to use questions as tools to guide your investigation.
+Use **questions** to guide the investigation.
 
-EDA is fundamentally a creative process.
+EDA is fundamentally a **creative** process.
 
-And like most creative processes, the key to asking *quality* questions is to generate a large *quantity* of questions.
+The trick is to generate a **large quantity** of questions first — then refine.
 
-## Useful Questions 
+::: notes
+Keep the R4DS language; just set up that we’ll translate into finance examples next.
+:::
 
-1.  What type of variation occurs within my variables?
+---
 
-2.  What type of covariation occurs between my variables?
+## Useful questions 
+
+1. What type of **variation** occurs within my variables?
+   - e.g., returns, volume, spreads, ratios
+
+2. What type of **covariation** occurs between my variables?
+   - e.g., asset vs market, sector differences, risk vs return
+
+::: notes
+Don’t over-explain. This is a signpost for the next sections (variation → covariation).
+If you want one quick callback: “This is why we plot before we model.”
+:::
+
 
 ## Tidy Data and Definitions {.smaller}
 
@@ -95,6 +141,22 @@ ggplot(data = diamonds) +
 ```
 :::
 :::
+
+::: notes
+Finance translation to say out loud (keep it quick):
+
+- Treat **cut / color / clarity** like finance **categories**:
+  - sector / industry, rating bucket (AAA…CCC), exchange/country, size bucket
+- Treat **carat** like a strong “size” driver in finance:
+  - market cap, duration, notional, exposure
+- Treat **price** like a valuation/outcome:
+  - spread, yield, price level, valuation multiple
+
+Meta-point:
+- The dataset is a teaching scaffold — the EDA moves are the same.
+- We’re practicing: “define the observation, then look for variation/covariation.”
+:::
+
 
 ## Calculating Counts
 
@@ -194,6 +256,46 @@ ggplot(data = smaller, mapping = aes(x = carat)) +
 :::
 :::
 
+## Variation in daily returns
+
+```{r echo=FALSE}
+library(tidyverse)
+library(here)
+library(scales)
+
+px <- read_csv(here("Lecture1", "data", "aapl_spy.csv"), show_col_types = FALSE) |>
+  mutate(
+    date   = as.Date(date),
+    ticker = as.character(ticker),
+    price  = adj_close
+  ) |>
+  select(date, ticker, price) |>
+  arrange(ticker, date)
+
+ret <- px |>
+  group_by(ticker) |>
+  mutate(ret = price / lag(price) - 1) |>
+  ungroup()
+
+ret |>
+  filter(!is.na(ret)) |>
+  ggplot(aes(x = ret, fill = ticker)) +
+  geom_histogram(bins = 60, alpha = 0.6, position = "identity") +
+  scale_x_continuous(labels = percent_format(accuracy = 0.1)) +
+  labs(
+    title = "Daily return distributions (AAPL vs SPY)",
+    x = "Daily return", y = "Count"
+  )
+```
+::: notes
+Tie-back: “This is exactly the ‘variation’ story from diamonds—just in finance clothing.”
+Quick interpretation prompts:
+Which has fatter tails? Which is more volatile?
+What do outliers represent in markets (news, macro shocks)?
+Mention: bin choice changes what you see; don’t overfit the histogram.
+:::
+
+
 ## Clusters
 
 Clusters of similar values suggest that subgroups exist in your data.
@@ -272,6 +374,24 @@ unusual
 ```
 :::
 :::
+
+## Finance outliers: what “weird” often means
+
+When you see extreme values in returns/prices/volume, common explanations are:
+
+- **Corporate actions**: splits/dividends can look like outliers if you use *unadjusted* prices
+- **Bad data / bad ticks**: stale quotes, misprints, missing values, time-zone/market-close issues
+- **Real events**: earnings, guidance, macro prints, sudden news (these are *interesting*, not “errors”)
+
+::: notes
+Key message: outliers aren’t automatically “remove them.”
+First ask: (1) data issue? (2) corporate action? (3) real event?
+Quick example prompts:
+- “If you see a -50% daily return, what’s more likely: bankruptcy overnight, or a split / data error?”
+- “If volume spikes 10x, is it index rebalancing / earnings / news?”
+:::
+
+
 ## Covariation
 
 If variation describes the behavior *within* a variable, covariation describes the behavior *between* variables.
@@ -369,6 +489,34 @@ ggplot(data = diamonds) +
 ```
 :::
 :::
+
+## Finance example: covariation (AAPL vs SPY)
+
+```{r echo=FALSE}
+wide <- ret |>
+  select(date, ticker, ret) |>
+  filter(!is.na(ret)) |>
+  tidyr::pivot_wider(names_from = ticker, values_from = ret)
+
+wide |>
+  ggplot(aes(x = SPY, y = AAPL)) +
+  geom_point(alpha = 0.35, size = 1.6) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  labs(
+    title = "AAPL vs SPY — daily returns",
+    x = "SPY daily return", y = "AAPL daily return"
+  )
+```
+::: notes
+Don’t fit a line here (save it for Lecture 4). Keep it EDA: “Do we see a positive relationship?”
+Prompts:
+Is the relationship tight or noisy?
+Do you see days where SPY is flat but AAPL moves (idiosyncratic risk)?
+Are there clusters/outliers worth investigating?
+Optional: mention overplotting and alpha as a practical fix.
+:::
+
 ## Patterns and models {.smaller}
 
 Patterns in your data provide clues about relationships.
