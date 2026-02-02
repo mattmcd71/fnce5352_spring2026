@@ -1,0 +1,55 @@
+
+/* Minimal, professional revealjs tweaks for FNCE 5352 */
+
+.reveal {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+.reveal .title-slide {
+  text-align: left !important;
+}
+
+.reveal .title-slide h1 {
+  font-size: 2.3em !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35em !important;
+  max-width: 900px;
+}
+
+.reveal .title-slide p.subtitle {
+  font-size: 1.05em !important;
+  margin-top: 0.15em !important;
+  margin-bottom: 1.2em !important;
+  opacity: 0.9;
+}
+
+.reveal .title-slide p.author,
+.reveal .title-slide p.date {
+  font-size: 0.85em !important;
+  opacity: 0.8;
+  margin: 0.15em 0 !important;
+}
+
+.reveal section h1 { font-size: 1.8em; }
+.reveal section h2 { font-size: 1.35em; }
+.reveal section, .reveal p, .reveal li { font-size: 0.95em; }
+
+.reveal ul { margin-top: 0.4em; }
+.reveal li { margin: 0.25em 0; }
+
+.full-slide {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.full-slide img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
