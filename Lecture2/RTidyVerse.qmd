@@ -22,6 +22,7 @@ format:
     controls: true
     preview-links: true
     show-notes: false
+    lazy-loading: false
   pdf:
     documentclass: article
     pdf-engine: xelatex
@@ -39,7 +40,7 @@ editor: visual
 
 ![](img/model-workflow.png)
 
--   Import → Tidy → **Visualize → Transform** → Model 
+-   Import → Tidy → **Visualize → Transform** → Model
 -   Today: **Visualize → Transform**
 -   Modeling comes later
 
