@@ -92,12 +92,14 @@ for qmd in "${REVEAL_QMDS[@]}"; do
 
   echo "    decktape: $base.html -> $base.pdf"
   npx -y decktape reveal \
+    --chrome-path "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
     --size 1280x720 \
+    --load-pause 6000 \
     --pause 2500 \
-    --load-pause 3000 \
     --url-load-timeout 180000 \
     --page-load-timeout 60000 \
-    "http://localhost:$PORT/$base.html" "$pdf"
+    "http://localhost:$PORT/$base.html?transition=none&controls=false&progress=false&history=false&hash=false" \
+    "$pdf"
 done
 
 echo "==> Done. PDFs are in: $FOLDER"
