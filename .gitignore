@@ -16,6 +16,24 @@ Lecture1/.DS_Store
 Lecture1/lecture1.html
 Lecture1/.DS_Store
 Lecture1/lecture1.html
-Lecture3/statistical_learning.html
-Lecture3/statistical_learning_files/
+Lecture4/statistical_learning.html
+Lecture4/statistical_learning_files/
+Lecture3/amortization.html
+Lecture3/amortization_files/
 syllabusworkspace
+Lecture4/archive/04Wrangling.html
+Lecture4/archive/04Wrangling.qmd
+Lecture4/archive/Data Wrangling.pdf
+Lecture4/archive/Intro To Tidyquant.pdf
+Lecture4/archive/IntroToTidyQuant.pdf
+Lecture4/archive/tidyquant.qmd
+Lecture4/archive/diagrams/join-anti.png
+Lecture4/archive/diagrams/join-inner.png
+Lecture4/archive/diagrams/join-many-to-many.png
+Lecture4/archive/diagrams/join-one-to-many.png
+Lecture4/archive/diagrams/join-outer.png
+Lecture4/archive/diagrams/join-semi-many.png
+Lecture4/archive/diagrams/join-semi.png
+Lecture4/archive/diagrams/join-setup.png
+Lecture4/archive/diagrams/join-setup2.png
+Lecture4/archive/diagrams/relational-nycflights.png
