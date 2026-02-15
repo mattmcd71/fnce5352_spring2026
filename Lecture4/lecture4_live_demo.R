@@ -14,7 +14,6 @@
 # ============================================================
 
 # ---- setup ----
-# TYPE LIVE: run these, explain why we load minimal libs
 library(tidyverse)
 library(lubridate)
 library(yardstick)
@@ -71,6 +70,26 @@ confint(m_adv1)
   plot(fitted(m_adv1), resid(m_adv1),
        xlab = "Fitted", ylab = "Residuals")
   abline(h = 0, lty = 2)
+
+
+library(ggplot2)
+
+ggplot(Advertising, aes(TV, sales)) +
+  geom_point() +
+  geom_abline(
+    intercept = coef(m_adv1)[1],
+    slope     = coef(m_adv1)[2]
+  ) +
+  labs(x = "TV ad spend", y = "Sales")
+
+library(broom)
+
+augment(m_adv1) |>
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(x = "Fitted", y = "Residuals")
+
 
   # Multiple regression: Sales ~ TV + Radio + Newspaper
   # TYPE LIVE
@@ -144,6 +163,14 @@ abline(m1, lwd = 2)
 plot(fitted(m1), resid(m1),
      xlab = "Fitted", ylab = "Residuals")
 abline(h = 0, lty = 2)
+
+#what if we remove the 568th point in the data set?
+m1a <- lm(aapl_ret ~ spy_ret, data = rets[-568,])
+summary(m1a)
+
+plot(rets$spy_ret[-568], rets$aapl_ret[-568],
+     xlab = "SPY return", ylab = "AAPL return")
+abline(m1a, lwd = 2)
 
 # 5) Multiple regression: add VIX (if available)
   # TYPE LIVE

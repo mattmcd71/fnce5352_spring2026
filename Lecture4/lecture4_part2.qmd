@@ -114,8 +114,11 @@ Say “if you keep checking the test set while you tweak, you’re cheating.”
 You can mention “data leakage” without getting technical.
 :::
 
+<!--
 ## 
 ![](img/train_test.png)
+
+-->
 
 ## Performance metrics: what they are (and what they aren’t)
 
@@ -206,6 +209,7 @@ Keep to ~60–90 seconds and move on. Direct them to the chapter reading.
 ##
 ![](img/islr_next2.png)
 
+<!--
 ## Lightweight assignment (pick one)
 
 1. **Market model memo (short):**
@@ -227,3 +231,4 @@ Keep grading light: rubric 0–3 for clarity + correct units. Accept R or Python
 - Model assessment = habits (plots + fair evaluation)
 
 
+-->

@@ -32,7 +32,7 @@ execute:
 editor: source
 ---
 
-## Tonight (3 hours)
+## Tonight
 
 - Linear regression as a *first* interpretable model
 - Interpretation first, mechanics light
@@ -47,7 +47,7 @@ Tonight: build intuition + interpretation; no derivations.
 
 - Data workflow + returns (Lecture 1)
 - Tidy data, EDA, transformation (Lectures 2–3)
-- Prediction vs inference, overfitting, train/test (Lecture 3)
+- Prediction vs inference, overfitting, train/test (Earlier tonight)
 
 ::: notes
 Bridge: now we put a simple model on top of the workflow.
@@ -68,7 +68,7 @@ Keep the language: expected / on average.
 Units are the whole point.
 :::
 
-## Example 1: Advertising (clean lab)
+## Example 1: Advertising 
 
 - outcome: **Sales**
 - predictor: **TV** (ad spend)
