@@ -1,0 +1,178 @@
+---
+title: "FNCE 5352 — Lecture 5 (Part 1): Classification & Logistic Regression"
+format:
+  revealjs:
+    theme: white
+    css: course_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute: 
+  echo: true
+  eval: true
+  warning: false
+editor: source
+---
+
+## 
+![](img/classification.png)
+
+## Classification: hard vs soft predictions
+
+- **Soft prediction:** estimate a probability  
+  - $\hat p(X) = P(Y=1 \mid X)$
+- **Hard prediction:** turn that probability into a class label  
+  - $\hat y(X) = \mathbf{1}\{\hat p(X) > t\}$ for some threshold $t$
+
+::: notes
+I want to make this explicit early:
+- The model’s natural output is a probability (soft prediction).
+- A hard label requires a threshold, which is a policy/decision choice.
+Keep the math minimal: just p-hat and an indicator with threshold t.
+:::
+
+## Why soft predictions matter in credit risk
+
+- We can **rank** accounts by risk (scorecards)
+- We can choose different actions at different probability ranges  
+  - e.g., approve / approve-with-conditions / manual review / decline
+- Thresholds change when costs or objectives change
+
+::: notes
+Concrete credit examples:
+- fraud: false negatives are expensive
+- underwriting: false positives lose revenue / customer goodwill
+Probability lets you adapt decisions without refitting the model.
+:::
+
+## Thresholds are business decisions
+
+- Picking $t=0.50$ is **not** automatically “right”
+- You pick $t$ based on tradeoffs:
+  - false positive vs false negative costs
+  - capacity constraints (manual reviews)
+  - regulatory / policy constraints
+
+::: notes
+This tees up Part 2 (errors, varying threshold, ROC).
+Say: “We’ll keep the model fixed and move the threshold knob.”
+:::
+
+## Example: credit card / default-style framing
+
+- $Y=1$: “bad outcome” (fraud / default / delinquency / downgrade)
+- $X$: features available at decision time (balance, utilization, income, behavior, etc.)
+- Output: $\hat p = P(Y=1 \mid X)$
+
+::: notes
+Explicitly: We’re not building a production credit scorecard.
+We’re learning modeling workflow + interpretation + evaluation.
+:::
+
+## 
+![](img/example_cred_card.png)
+
+## 
+![](img/can_use_linear.png)
+
+## 
+![](img/lin_v_log.png)
+
+## Why not just use linear regression?
+
+- Linear regression can predict values < 0 or > 1
+- The relationship between probability and predictors is rarely linear
+- Classification wants a model constrained to $[0,1]$
+
+::: notes
+Keep it simple. The audience gets why “probabilities outside [0,1]” is bad.
+Then: logistic fixes the range and gives an interpretable probability curve.
+:::
+
+## Linear vs logistic (big idea)
+
+- Logistic regression models probability using an S-shaped curve
+- Think: “linear model on log-odds”
+
+$$
+\log\left(\frac{p(X)}{1-p(X)}\right) = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
+$$
+
+::: notes
+One equation is enough. I usually read it as:
+- left side = log-odds
+- right side = familiar linear predictor
+We’ll fit it with glm and interpret directionally.
+:::
+
+
+## Fitting logistic regression in R 
+
+Small snippet only — we’ll do the real work in the `.R` demo file.
+
+```r
+fit <- glm(default ~ balance + income + student,
+           data = train,
+           family = binomial)
+
+p_hat <- predict(fit, newdata = test, type = "response")
+```
+
+::: notes
+Emphasize: glm is “generalized linear model”; binomial family = logistic regression.
+type="response" gives probability (not log-odds).
+:::
+
+## Interpreting coefficients 
+
+- Sign: increases vs decreases risk
+- Magnitude: relates to odds, not raw probability
+- Optional: odds ratio for a 1-unit increase in $X_j$ is $\exp(\beta_j)$
+
+::: notes
+Don’t overdo this. Students struggle if we get too deep into odds.
+I like to say: “positive coefficient => higher risk holding other vars fixed.”
+Then optional: exp(beta) as multiplicative change in odds.
+:::
+
+## Prediction = probability, not a decision
+
+- Model output: $\hat p_i = P(Y_i=1 \mid X_i)$
+- Decision rule needs a threshold $t$:
+  - predict 1 if $\hat p_i > t$
+
+::: notes
+This slide sets up Part 2: errors, thresholds, ROC.
+Make the point: classification model gives probabilities; you choose a policy.
+:::
+
+## Part 1 wrap
+
+You should be able to:
+
+- explain why logistic regression is used for $0/1$ outcomes
+- fit a simple logistic regression with `glm()`
+- generate predicted probabilities with `predict(..., type="response")`
+
+Next (after break): how to evaluate + choose thresholds.
+
+::: notes
+Preview: Types of Errors, Varying the Threshold, ROC Curve.
+:::
