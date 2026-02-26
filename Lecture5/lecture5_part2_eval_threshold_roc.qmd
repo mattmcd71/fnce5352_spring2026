@@ -40,7 +40,7 @@ editor: source
 #| include: false
 #| file: setup.R
 ```
-
+ <!--
 ## Regression vs Classification {.smaller}
 
 -   Definition:
@@ -175,7 +175,7 @@ metrics(data_with_predictions, truth = latency, estimate = .pred)
 -   RMSE: difference between the predicted and observed values ⬇️
 -   $R^2$: squared correlation between the predicted and observed values ⬆️
 -   MAE: similar to RMSE, but mean absolute error ⬇️
-
+-->
 ## Classification Metrics {.smaller}
 
 **Definitions**:
@@ -228,7 +228,7 @@ What happens if you change the cutoff?
 
 -   Increasing makes it harder to be called *Class1* $\Longrightarrow$ fewer predicted events, specificity $\Uparrow$, sensitivity $\Downarrow$
 
--   Decreasing makes it harder to be called *Class1* $\Longrightarrow$ fewer predicted events, specificity $\Uparrow$, sensitivity $\Downarrow$
+-   Decreasing makes it easier to be called *Class1* $\Longrightarrow$ more predicted events, specificity $\Downarrow$, sensitivity $\Uparrow$
 :::
 
 ::: {.column width="50%"}

@@ -125,4 +125,15 @@ roc_auc_val <- test_scored %>%
 
 autoplot(roc_obj) + labs(title = "ROC curve — logistic regression on Default")
 
+test_scored <- test_scored %>%
+  mutate(
+    p_hat_simple = predict(fit1, newdata = test, type = "response")
+  )
 
+roc_obj2 <- test_scored %>%
+  roc_curve(truth = default, p_hat_simple, event_level = "second")
+
+roc_auc_val2 <- test_scored %>%
+  roc_auc(truth = default, p_hat_simple, event_level = "second")
+
+autoplot(roc_obj2) + labs(title = "ROC curve — logistic regression on Default")

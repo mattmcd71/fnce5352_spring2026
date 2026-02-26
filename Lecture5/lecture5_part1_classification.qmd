@@ -31,6 +31,147 @@ execute:
 editor: source
 ---
 
+```{r}
+#| include: false
+#| file: setup.R
+```
+
+## Regression vs Classification {.smaller}
+
+-   Definition:
+
+    -   **Regression**: Predicts continuous outcomes. It estimates a mapping function (f) from input variables (X) to a continuous output variable (Y).
+
+    -   **Classification**: Predicts discrete outcomes. It categorizes input data into two or more classes.
+
+-   Output Type:
+
+    -   **Regression**: The output is a real or continuous value (e.g., salary, price).
+
+    -   **Classification**: The output is a category (e.g., default or no default).
+
+-   Both regression and classification are types of supervised machine learning algorithms, where a model is trained according to the existing model along with correctly labeled data
+
+## RMSE {.smaller}
+
+-   Definition: The square root of the average of the squared differences between the predicted and actual values. It measures the standard deviation of the residuals (prediction errors).
+
+-   Interpretation: Represents the average error made by the model in predicting the outcome. Lower values indicate better fit.
+
+-   Scale: Depends on the target variable's scale. Higher RMSE values may not necessarily indicate a poor model, especially if the target variable has a wide range.
+
+-   Sensitivity: More sensitive to outliers than other metrics, such as MAE (Mean Absolute Error).
+
+## RMSE Formula
+
+-   $\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$
+
+-   $n$ is the number of observations.
+
+-   $y_i$ is the actual value of the observation.
+
+-   $\hat{y}_i$ is the predicted value.
+
+-   The sum $\sum_{i=1}^{n} (y_i - \hat{y}_i)^2$ calculates the squared differences between the actual and predicted values.
+
+## $R^2$ {.smaller}
+
+-   Definition: The proportion of the variance in the dependent variable that is predictable from the independent variables. It is a statistical measure of how close the data are to the fitted regression line.
+
+-   Interpretation: Values range from 0 to 1. A higher value indicates a better fit, with 1 meaning the model explains all the variability of the response data around its mean.
+
+-   Scale-Independent: Unlike RMSE, R-squared is a normalized measure, making it easier to compare the goodness of fit across different datasets and models.
+
+-   Limitation: Can be misleadingly high in models with many predictors or when using higher-order polynomials. Adjusted R-squared is often used to account for the number of predictors.
+
+## $R^2$ Formula
+
+-   $R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}$
+-   $n$, $y_i$ and $\hat{y}_i$ are the defined the same as in $RMSE$
+-   The numerator, $\sum_{i=1}^{n} (y_i - \hat{y}_i)^2$, is the sum of the squared differences between the actual and the predicted values (also known as the sum of squares of residuals).
+-   The denominator, $\sum_{i=1}^{n} (y_i - \bar{y})^2$, is the total sum of squares (TSS) or the sum of the squared differences between the actual values and the mean of the actual values.
+
+## RMSE vs $R^2$
+
+$RMSE$ measures *accuracy* while $R^2$ measures *correlation*.
+
+```{r performance-reg-metrics, echo = FALSE}
+#| fig.cap = "Observed versus predicted values for models that are optimized using the RMSE compared to the coefficient of determination",
+#| fig.alt = "Scatter plots of numeric observed versus predicted values for models that are optimized using the RMSE and the coefficient of determination. The former results in results that are close to the 45 degree line of identity while the latter shows results with a tight linear correlation but falls well off of the line of identity."
+library(tidymodels)
+library(kableExtra)
+library(modeldata)
+tidymodels_prefer()
+source("ames_snippets.R")
+load("RData/lm_fit.RData")
+
+set.seed(234)
+n <- 200
+obs <- runif(n, min = 2, max = 20)
+
+reg_ex <- 
+  tibble(
+    observed = c(obs, obs),
+    predicted = c(obs + rnorm(n, sd = 1.5), 5 + .5 * obs + rnorm(n, sd = .5)),
+    approach = rep(c("RMSE optimized", "R^2 optimized"), each = n)
+  ) %>% 
+  mutate(approach = factor(
+    approach, 
+    levels = c("RMSE optimized", "R^2 optimized"),
+    labels = c(expression(RMSE ~ optimized), expression(italic(R^2) ~ optimized)))
+  )
+
+ggplot(reg_ex, aes(x = observed, y = predicted)) + 
+  geom_abline(lty = 2) + 
+  geom_point(alpha = 0.5) + 
+  coord_obs_pred() + 
+  facet_wrap(~ approach, labeller = "label_parsed")
+```
+
+## Calculating RMSE using yardstick
+
+```{r}
+#| echo: false
+library(tidymodels)
+library(countdown)
+library(tidyverse)
+data("tree_frogs", package = "stacks")
+tree_frogs <- tree_frogs %>%
+  mutate(t_o_d = factor(t_o_d),
+         age = age / 86400) %>% 
+  filter(!is.na(latency)) %>%
+  select(-c(clutch, hatched))
+
+set.seed(123)
+frog_split <- initial_split(tree_frogs, prop = 0.8, strata = latency)
+frog_train <- training(frog_split)
+frog_test <- testing(frog_split)
+tree_spec <- decision_tree(cost_complexity = 0.001, mode = "regression")
+tree_wflow <- workflow(latency ~ ., tree_spec)
+tree_fit <- fit(tree_wflow, frog_train)
+data_with_predictions <- augment(tree_fit, new_data = frog_test)
+```
+
+```{r}
+library (yardstick)
+
+rmse(data_with_predictions, truth = latency, estimate = .pred)
+```
+
+## Calculating Multiple Metrics
+
+```{r}
+metrics <- metric_set(rmse, rsq, mae)
+metrics(data_with_predictions, truth = latency, estimate = .pred)
+```
+
+. . .
+
+-   RMSE: difference between the predicted and observed values ⬇️
+-   $R^2$: squared correlation between the predicted and observed values ⬆️
+-   MAE: similar to RMSE, but mean absolute error ⬇️
+
+
 ## 
 ![](img/classification.png)
 

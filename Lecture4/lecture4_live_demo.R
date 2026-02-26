@@ -74,7 +74,7 @@ confint(m_adv1)
 
 library(ggplot2)
 
-ggplot(Advertising, aes(TV, sales)) +
+ggplot(Advertising, aes(x = TV, y = sales)) +
   geom_point() +
   geom_abline(
     intercept = coef(m_adv1)[1],
@@ -127,9 +127,10 @@ prices <- readr::read_csv(price_path, show_col_types = FALSE)
 prices <- prices |>
   mutate(date = as.Date(date)) |>
   pivot_wider(names_from = ticker, 
-              values_from = adj_close)
+              values_from = adj_close) |>
+  rename(VIX = `^VIX`)
 
-colnames(prices) <- c('date', 'AAPL', 'SPY', 'VIX')
+#colnames(prices) <- c('date', 'AAPL', 'SPY', 'VIX')
 
 # 3) Compute returns (daily)
 rets <- prices |>
