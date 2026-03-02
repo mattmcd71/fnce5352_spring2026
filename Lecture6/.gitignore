@@ -1,0 +1,16 @@
+.DS_Store
+04ModelEvaluation.html
+04ModelEvaluation_files
+05FeatureEngineering.html
+05FeatureEngineering_files
+06Resampling.html
+06Resampling_cache
+06Resampling_files
+07TuningParameters.html
+07TuningParameters_cache
+07TuningParameters_files
+workspace.qmd
+/archive
+/lecture6_part1_resampling_default_files
+/lecture6_part2_knn_scaling_caravan_files
+

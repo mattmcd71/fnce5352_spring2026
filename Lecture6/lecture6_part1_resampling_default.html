@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture6_part1_resampling_default_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture6_part1_resampling_default_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture6_part1_resampling_default_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture6_part1_resampling_default_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture6_part1_resampling_default_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture6_part1_resampling_default_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture6_part1_resampling_default_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.26">
+
+  <meta name="author" content="Matt McDonald">
+  <title>Lecture 6 (Part 1): Resampling Methods</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture6_part1_resampling_default_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture6_part1_resampling_default_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture6_part1_resampling_default_files/libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="course_minimal.css">
+  <link href="lecture6_part1_resampling_default_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture6_part1_resampling_default_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture6_part1_resampling_default_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture6_part1_resampling_default_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Lecture 6 (Part 1): Resampling Methods</h1>
+  <p class="subtitle">Estimating Performance Honestly</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Matt McDonald 
+</div>
+</div>
+</div>
+
+</section>
+<section id="quick-reminder-what-were-trying-to-estimate" class="slide level2">
+<h2>Quick reminder: what we’re trying to estimate</h2>
+<p>We want the model’s performance on <strong>new data</strong>.</p>
+<p>But we only have:</p>
+<ul>
+<li>one dataset</li>
+<li>one realized sample of “the world”</li>
+<li>finite size (and often class imbalance)</li>
+</ul>
+<aside class="notes">
+<p>AUC, RMSE, etc. are estimates. Resampling is how we get better estimates.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="why-we-care-in-finance" class="slide level2">
+<h2>Why we care in finance</h2>
+<p>Model performance matters because decisions have costs:</p>
+<ul>
+<li>false positives vs false negatives (credit risk)</li>
+<li>asymmetric losses (risk management)</li>
+<li>stability matters (models used repeatedly)</li>
+</ul>
+<aside class="notes">
+<p>In finance: you care about both the level and the stability of performance.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="a-single-traintest-split-is-a-roll-of-the-dice" class="slide level2">
+<h2>A single train/test split is a roll of the dice</h2>
+<p>Even with the same dataset + same model:</p>
+<ul>
+<li>random split changes the training sample</li>
+<li>random split changes the test sample</li>
+<li>measured performance moves because of sampling noise</li>
+<li>the test set is a <strong>final exam</strong>: don’t use it for model selection or hyperparameter tuning</li>
+</ul>
+</section>
+<section id="thought-experiment" class="slide level2">
+<h2>Thought experiment</h2>
+<p>Two analysts do the same thing:</p>
+<ul>
+<li>Analyst A: AUC = 0.96</li>
+<li>Analyst B: AUC = 0.92</li>
+</ul>
+<p>They both used the same code and model—just different splits.</p>
+<p>So…which is “the true performance”?</p>
+</section>
+<section id="what-resampling-does-conceptually" class="slide level2">
+<h2>What resampling does (conceptually)</h2>
+<p>Resampling replaces:</p>
+<blockquote>
+<p>“one held-out set”</p>
+</blockquote>
+<p>with</p>
+<blockquote>
+<p>“many plausible held-out sets”</p>
+</blockquote>
+<p>Then:</p>
+<ul>
+<li>compute performance on each</li>
+<li>summarize as mean + spread</li>
+</ul>
+</section>
+<section id="vocabulary-check" class="slide level2">
+<h2>Vocabulary check</h2>
+<ul>
+<li><strong>Parameter</strong>: learned from data (e.g., logistic regression coefficients)</li>
+<li><strong>Performance estimate</strong>: computed from predictions (e.g., AUC on holdout)</li>
+<li><strong>Resampling</strong>: repeated fitting/evaluation using structured re-use of the dataset</li>
+</ul>
+<aside class="notes">
+<p>We’ll use KNN + hyperparameters in Part 2. Here we stay evaluation-focused.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="resampling-menu" class="slide level2">
+<h2>Resampling menu</h2>
+<ul>
+<li><strong>Validation set approach</strong> (single split)</li>
+<li><strong>LOOCV</strong> (leave-one-out)</li>
+<li><strong>k-fold cross-validation</strong></li>
+<li><strong>bootstrap</strong> (uncertainty / sampling with replacement)</li>
+<li><strong>rolling / expanding window</strong> (time series; finance default)</li>
+</ul>
+<aside class="notes">
+<p>We’ll emphasize k-fold CV as the workhorse for i.i.d. data. Rolling windows: the right default for forecasting problems.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-validation-set-approach" class="slide level2 smaller">
+<h2>The validation set approach</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="what-it-is">What it is</h3>
+<ul>
+<li>Split data into <strong>train</strong> and <strong>test</strong></li>
+<li>Fit the model on <strong>train</strong></li>
+<li>Evaluate on <strong>test</strong></li>
+<li>You get <strong>one</strong> estimate of out-of-sample performance</li>
+</ul>
+<aside class="notes">
+<p>Say out loud: “This is what most people do first — and it’s fine as a first pass.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div><div class="column" style="width:50%;">
+<h3 id="why-its-used">Why it’s used</h3>
+<ul>
+<li>simplest conceptually</li>
+<li>fastest to run</li>
+<li>good for quick sanity checks</li>
+</ul>
+<h3 id="why-its-risky">Why it’s risky</h3>
+<ul>
+<li>estimate depends on <strong>which observations</strong> land in test</li>
+<li>can be misleading for <strong>rare events</strong></li>
+<li>not suitable for <strong>model selection / hyperparameter tuning</strong> (you’ll overfit the split)</li>
+</ul>
+<aside class="notes">
+<p>Key line: “Validation set approach is OK for a first check, but not a stable basis for choosing between models.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div></div>
+</section>
+<section id="what-makes-validation-set-estimates-noisy" class="slide level2">
+<h2>What makes validation-set estimates noisy?</h2>
+<ul>
+<li>smaller training set (less stable fit)</li>
+<li>smaller test set (less stable evaluation)</li>
+<li>for imbalanced outcomes: which rare cases land in test matters a lot</li>
+</ul>
+</section>
+<section id="practical-example-rare-events" class="slide level2">
+<h2>Practical example: rare events</h2>
+<p>If the event is rare (defaults, fraud, churn):</p>
+<ul>
+<li>the test set might contain “not many” events</li>
+<li>metric values become sensitive to which events land in test</li>
+<li>repeated splits can vary surprisingly</li>
+</ul>
+<aside class="notes">
+<p>This is why accuracy is often a trap in rare-event settings.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="loocv-leave-one-out-cv" class="slide level2 smaller">
+<h2>LOOCV (Leave-One-Out CV)</h2>
+<p>How it works:</p>
+<ul>
+<li>hold out 1 observation</li>
+<li>train on the other <span class="math inline">\(n-1\)</span></li>
+<li>repeat <span class="math inline">\(n\)</span> times</li>
+<li>aggregate error / AUC / etc.</li>
+</ul>
+<p>Why it’s appealing:</p>
+<ul>
+<li>uses almost all observations for training each time</li>
+</ul>
+<p>Why it’s not always best:</p>
+<ul>
+<li>computational cost</li>
+<li>still can have high variance (depends on the problem)</li>
+</ul>
+</section>
+<section id="when-loocv-is-most-useful" class="slide level2">
+<h2>When LOOCV is most useful</h2>
+<p>LOOCV is often used when:</p>
+<ul>
+<li><span class="math inline">\(n\)</span> is small</li>
+<li>model is fast to fit</li>
+<li>you want an “almost unbiased” training-size effect</li>
+</ul>
+<p>In modern practice:</p>
+<ul>
+<li>k-fold is often the default anyway</li>
+</ul>
+</section>
+<section id="k-fold-cross-validation-the-workhorse" class="slide level2">
+<h2>k-fold cross-validation (the workhorse)</h2>
+<p>How it works:</p>
+<ul>
+<li>split into <span class="math inline">\(k\)</span> folds</li>
+<li>repeat:
+<ul>
+<li>train on <span class="math inline">\(k-1\)</span> folds</li>
+<li>validate on the held-out fold</li>
+</ul></li>
+<li>aggregate fold-wise performance</li>
+</ul>
+<p>Typical choices:</p>
+<ul>
+<li><span class="math inline">\(k=5\)</span> or <span class="math inline">\(k=10\)</span></li>
+</ul>
+</section>
+<section id="visual-k-fold-cv" class="slide level2">
+<h2>Visual: k-fold CV</h2>
+
+<img data-src="img/resampling.svg" style="width:85.0%" class="r-stretch"><aside class="notes">
+<p>Point out: there’s nothing special about <em>that</em> particular held-out block.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="visual-3-fold-cv" class="slide level2">
+<h2>Visual: 3-fold CV</h2>
+
+<img data-src="img/three-CV.svg" style="width:90.0%" class="r-stretch"><aside class="notes">
+<p>It’s 3 folds in the figure; in class we’ll use 10 folds.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="visual-cv-iterations" class="slide level2">
+<h2>Visual: CV iterations</h2>
+
+<img data-src="img/three-CV-iter.svg" style="width:90.0%" class="r-stretch"></section>
+<section id="why-do-we-like-k-fold-cv" class="slide level2">
+<h2>Why do we like k-fold CV?</h2>
+<p>k-fold CV tends to be a good compromise:</p>
+<ul>
+<li>more stable than one split</li>
+<li>less computationally expensive than LOOCV</li>
+<li>works well for many model classes</li>
+</ul>
+</section>
+<section id="choosing-k-the-intuition" class="slide level2">
+<h2>Choosing k: the intuition</h2>
+<ul>
+<li>Smaller <span class="math inline">\(k\)</span> (e.g., 5):
+<ul>
+<li>bigger validation fold</li>
+<li>fewer models to fit</li>
+<li>sometimes slightly noisier, faster</li>
+</ul></li>
+<li>Larger <span class="math inline">\(k\)</span> (e.g., 10):
+<ul>
+<li>smaller validation fold</li>
+<li>more models to fit</li>
+<li>often a bit more stable</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>Don’t oversell: 5 vs 10 usually doesn’t matter much compared to bigger modeling choices.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-cv-produces-how-to-read-it" class="slide level2">
+<h2>What CV produces (how to read it)</h2>
+<p>CV gives you a set of fold-wise scores:</p>
+<ul>
+<li>AUC<span class="math inline">\(_1\)</span>, AUC<span class="math inline">\(_2\)</span>, …, AUC<span class="math inline">\(_k\)</span></li>
+</ul>
+<p>From that you can compute:</p>
+<ul>
+<li>mean CV AUC</li>
+<li>SD (spread across folds)</li>
+<li>SE (uncertainty in the mean, if you want it)</li>
+</ul>
+</section>
+<section id="what-does-spread-mean" class="slide level2">
+<h2>What does “spread” mean?</h2>
+<p>If fold-wise scores vary a lot:</p>
+<ul>
+<li>the problem may be unstable / noisy</li>
+<li>your model may be overfitting</li>
+<li>performance might be sensitive to which observations you train on</li>
+</ul>
+<p>If fold-wise scores are tight:</p>
+<ul>
+<li>performance is more stable</li>
+<li>you can trust comparisons more</li>
+</ul>
+</section>
+<section id="train-cv-test-roles" class="slide level2">
+<h2>Train / CV / Test roles</h2>
+<div class="columns">
+<div class="column" style="width:55%;">
+<h3 id="big-picture-workflow">Big picture workflow</h3>
+<ul>
+<li><strong>Training set</strong>: fit parameters</li>
+<li><strong>CV (inside training)</strong>: compare models, tune settings, choose features</li>
+<li><strong>Test set</strong>: final evaluation (one-time, no iteration)</li>
+</ul>
+<aside class="notes">
+<p>Say “test set is the final exam” again.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div><div class="column" style="width:45%;">
+<h3 id="inside-each-cv-fold">Inside each CV fold</h3>
+<ul>
+<li><p><strong>analysis set</strong>: the fold’s training data<br>
+(fit the model here)</p></li>
+<li><p><strong>assessment set</strong>: the fold’s validation data<br>
+(score the model here)</p></li>
+</ul>
+<aside class="notes">
+<p>This is rsample vocabulary. It makes the fold mechanics concrete without teaching tidymodels.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div></div>
+</section>
+<section id="common-mistake-test-set-leakage" class="slide level2">
+<h2>Common mistake: test set leakage</h2>
+<p>If you:</p>
+<ul>
+<li>choose features based on test results</li>
+<li>tune hyperparameters based on test results</li>
+<li>choose threshold based on test results</li>
+</ul>
+<p>…then your test performance is optimistic.</p>
+</section>
+<section id="leakage-a-concrete-checklist" class="slide level2">
+<h2>Leakage: a concrete checklist</h2>
+<p>Leakage happens whenever information from validation/test influences training.</p>
+<p>Common ways:</p>
+<ul>
+<li>preprocessing using full dataset (mean/SD, imputation, PCA)</li>
+<li>feature selection using full dataset</li>
+<li>tuning settings using the test set</li>
+<li>“peeking” at the test set repeatedly</li>
+</ul>
+</section>
+<section id="paired-comparisons-important-in-practice" class="slide level2">
+<h2>Paired comparisons (important in practice)</h2>
+<p>When comparing Model A vs Model B:</p>
+<ul>
+<li>use the <strong>same folds</strong></li>
+<li>compute fold-wise differences</li>
+<li>summarize differences (mean diff + SD)</li>
+</ul>
+<p>Why this helps:</p>
+<ul>
+<li>reduces noise from fold composition</li>
+<li>makes comparisons more fair</li>
+</ul>
+</section>
+<section id="stratification-small-but-important" class="slide level2">
+<h2>Stratification (small but important)</h2>
+<p>For classification with imbalance:</p>
+<ul>
+<li>build folds that preserve class proportions</li>
+<li>many tools offer <code>strata = outcome</code></li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>prevents “event-free” folds</li>
+<li>reduces variance in fold-wise metrics</li>
+</ul>
+</section>
+<section id="metrics-choice-matters" class="slide level2">
+<h2>Metrics choice matters</h2>
+<p>For rare events:</p>
+<ul>
+<li>accuracy can look great even for useless models</li>
+<li>AUC is often better for ranking</li>
+<li>threshold-based metrics depend on business objectives</li>
+</ul>
+<aside class="notes">
+<p>You already did ROC/AUC in Lecture 5; just connect to it.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="bootstrap-resampling-quick-but-clearer" class="slide level2">
+<h2>Bootstrap resampling (quick but clearer)</h2>
+<p>Bootstrap:</p>
+<ul>
+<li>sample <span class="math inline">\(n\)</span> observations <strong>with replacement</strong></li>
+<li>fit on bootstrap sample</li>
+<li>evaluate (often) on out-of-bag observations</li>
+<li>repeat many times</li>
+</ul>
+
+<img data-src="img/bootstraps.svg" style="width:88.0%" class="r-stretch"><aside class="notes">
+<p>Bootstrap is heavily used for estimating uncertainty around parameters and predictions. Different goal from CV (CV is often used for estimating test error / tuning).</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="cv-vs-bootstrap-how-to-remember" class="slide level2">
+<h2>CV vs bootstrap (how to remember)</h2>
+<ul>
+<li>CV: “How good is the model out-of-sample?”</li>
+<li>Bootstrap: “How variable is this estimate / coefficient / prediction?”</li>
+</ul>
+<p>(There is overlap, but that’s the mental model.)</p>
+</section>
+<section id="time-series-caveat-finance" class="slide level2">
+<h2>Time series caveat (finance)</h2>
+<p>For time series:</p>
+<ul>
+<li>random splits break temporal structure</li>
+<li>random folds leak future into past</li>
+</ul>
+<p>Better evaluation:</p>
+<ul>
+<li>rolling window (fixed size)</li>
+<li>expanding window (grows over time)</li>
+</ul>
+
+<img data-src="img/rolling.svg" style="width:88.0%" class="r-stretch"><aside class="notes">
+<p>Mention: you’ll revisit this for forecasting later; today we just flag it.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="v-fold-cross-validation-with-rsample" class="slide level2">
+<h2>v-fold cross-validation with <code>rsample</code></h2>
+<p>Goal: estimate performance more reliably than a single split</p>
+<p>Key idea:</p>
+<ul>
+<li>create <strong>many</strong> train/validate splits (folds)</li>
+<li>fit on one part, evaluate on the held-out part</li>
+<li>summarize performance across folds</li>
+</ul>
+<aside class="notes">
+<p>This is “repeat the validation set idea many times in a structured way.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="initial_split-vs-vfold_cv" class="slide level2">
+<h2><code>initial_split()</code> vs <code>vfold_cv()</code></h2>
+<p><strong>Single split (validation set approach)</strong></p>
+<ul>
+<li><code>initial_split(df, prop = 0.7)</code></li>
+<li>then: <code>training(split)</code>, <code>testing(split)</code></li>
+</ul>
+<p><strong>v-fold CV</strong></p>
+<ul>
+<li><code>vfold_cv(df, v = 10)</code></li>
+<li>then: <code>analysis(split)</code>, <code>assessment(split)</code></li>
+</ul>
+<aside class="notes">
+<p>Say: “Same concept—two pieces of data—but different names because it’s repeated many times.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-vfold_cv-returns" class="slide level2">
+<h2>What <code>vfold_cv()</code> returns</h2>
+<p><code>vfold_cv()</code> returns a tibble with:</p>
+<ul>
+<li>an <code>id</code> for each fold</li>
+<li>a <code>splits</code> column (each row contains one split object)</li>
+</ul>
+<p>So you can think:</p>
+<ul>
+<li><strong>one row = one fold</strong></li>
+<li><strong>one split = analysis + assessment</strong></li>
+</ul>
+<aside class="notes">
+<p>It’s a tibble with a list-column. Don’t over-explain list-columns; just say “each row stores one fold.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="inside-each-fold-analysis-vs-assessment" class="slide level2">
+<h2>Inside each fold: analysis vs assessment</h2>
+<p>Within a given fold split:</p>
+<ul>
+<li><p><strong>analysis set</strong><br>
+“fit here” (like training data)</p></li>
+<li><p><strong>assessment set</strong><br>
+“score here” (like validation/test data)</p></li>
+</ul>
+<p>Important:</p>
+<ul>
+<li>every observation appears in an assessment set exactly once (across all folds)</li>
+</ul>
+<aside class="notes">
+<p>This is the vocabulary that matches <code>rsample</code>.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="stratified-v-fold-cv-recommended-for-classification" class="slide level2">
+<h2>Stratified v-fold CV (recommended for classification)</h2>
+<p>If your outcome is imbalanced (rare events), use stratification:</p>
+<ul>
+<li><code>vfold_cv(df, v = 10, strata = outcome)</code></li>
+</ul>
+<p>Why:</p>
+<ul>
+<li>keeps class proportions similar in each fold</li>
+<li>reduces fold-to-fold weirdness (e.g., “almost no events in this fold”)</li>
+</ul>
+<aside class="notes">
+<p>This is exactly like <code>initial_split(..., strata=...)</code> but applied to folds.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-workflow-you-should-follow" class="slide level2">
+<h2>The workflow you should follow</h2>
+<ol type="1">
+<li>Create a final <strong>train/test</strong> split (test = final exam)</li>
+<li>Create <strong>v-fold CV</strong> folds <em>inside training only</em></li>
+<li>Use folds to:
+<ul>
+<li>compare models</li>
+<li>tune hyperparameters</li>
+<li>choose features / preprocessing decisions</li>
+</ul></li>
+<li>Evaluate once on the test set at the end</li>
+</ol>
+<aside class="notes">
+<p>Reinforce: CV is for selection; test is for final report.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-you-compute-from-cv" class="slide level2">
+<h2>What you compute from CV</h2>
+<p>From the folds you’ll get:</p>
+<ul>
+<li>fold-by-fold metric values (e.g., AUCs)</li>
+<li>mean CV performance</li>
+<li>spread across folds (SD)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>mean = your best estimate</li>
+<li>spread = stability / uncertainty</li>
+</ul>
+<aside class="notes">
+<p>You can say: “This is why we like CV: you get both a number and a sense of how wobbly it is.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="wrap-up-part-1" class="slide level2">
+<h2>Wrap-up (Part 1)</h2>
+<p>If you remember one thing:</p>
+<ul>
+<li><strong>One split is noisy</strong></li>
+<li><strong>CV gives a distribution, not a single number</strong></li>
+<li>Keep the <strong>test set</strong> for the final exam</li>
+</ul>
+<p>Next (Part 2):</p>
+<ul>
+<li>KNN as a flexibility knob</li>
+<li>scaling + leakage (feature engineering toe dip)</li>
+<li>CV for tuning and comparison</li>
+</ul>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture6_part1_resampling_default_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: true,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 720,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 8.0e-2,
+
+        // Bounds for smallest/largest possible scale to apply to content
+        minScale: 0.6,
+
+        maxScale: 1.2,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

@@ -12,7 +12,7 @@
 library(dplyr)
 library(rsample)
 library(yardstick)
-library(class)   # knn()
+library(kknn)    # KNN with probabilities
 library(tidyr)
 
 # If you use ISLR (not ISLR2), just change this line to: library(ISLR)
@@ -123,6 +123,13 @@ sdv[sdv == 0] <- 1
 X_train <- scale(X_train_raw, center = mu, scale = sdv)
 X_test  <- scale(X_test_raw, center = mu, scale = sdv)
 
+# Put scaled predictors into data frames for kknn()
+train_df <- as.data.frame(X_train)
+train_df$Purchase <- y_train
+
+test_df <- as.data.frame(X_test)
+test_df$Purchase <- y_test
+
 k_show <- c(1, 3, 11, 51, 101)
 
 train_auc <- numeric(length(k_show))
@@ -132,18 +139,16 @@ for (j in seq_along(k_show)) {
   k <- k_show[j]
 
   # --- Training AUC (optimistic on purpose) ---
-  pred_tr <- knn(train = X_train, test = X_train, cl = y_train, k = k, prob = TRUE)
-  p_win_tr <- attr(pred_tr, "prob")
-  p_hat_tr <- ifelse(pred_tr == "Yes", p_win_tr, 1 - p_win_tr)
+  fit_tr <- kknn(Purchase ~ ., train = train_df, test = train_df, k = k)
+  p_hat_tr <- fit_tr$prob[, "Yes"]
 
   scored_tr <- tibble(Purchase = y_train, p_hat = p_hat_tr)
   train_auc[j] <- roc_auc(scored_tr, truth = Purchase, p_hat, event_level = "second") %>%
     pull(.estimate)
 
   # --- Test AUC (what we care about) ---
-  pred_te <- knn(train = X_train, test = X_test, cl = y_train, k = k, prob = TRUE)
-  p_win_te <- attr(pred_te, "prob")
-  p_hat_te <- ifelse(pred_te == "Yes", p_win_te, 1 - p_win_te)
+  fit_te <- kknn(Purchase ~ ., train = train_df, test = test_df, k = k)
+  p_hat_te <- fit_te$prob[, "Yes"]
 
   scored_te <- tibble(Purchase = y_test, p_hat = p_hat_te)
   test_auc[j] <- roc_auc(scored_te, truth = Purchase, p_hat, event_level = "second") %>%
@@ -151,14 +156,13 @@ for (j in seq_along(k_show)) {
 }
 
 tibble(k = k_show, auc_train = train_auc, auc_test = test_auc)
-# 
-Takeaway: small k can look great in-sample. We pick k using CV
+# Takeaway: small k can look great in-sample. We pick k using CV
 
 # --- B2) 10-fold CV (inside training) to tune k ---
 set.seed(789)
 
 folds1 <- vfold_cv(train1, v = 10, strata = Purchase)
-k_grid <- c(1, 3, 5, 11, 25, 51, 101, 201, 401, 3600)
+k_grid <- c(1, 3, 5, 11, 25, 51, 101, 201, 401, 801, 1201, 3601)
 
 # We'll store fold AUCs in a matrix: rows = folds, cols = k values
 auc_mat <- matrix(NA_real_, nrow = nrow(folds1), ncol = length(k_grid))
@@ -183,13 +187,19 @@ for (i in 1:nrow(folds1)) {
   X_tr <- scale(X_tr_raw, center = mu, scale = sdv)
   X_va  <- scale(X_va_raw, center = mu, scale = sdv)
 
+  tr_df <- as.data.frame(X_tr)
+  tr_df$Purchase <- y_tr
+
+  va_df <- as.data.frame(X_va)
+  va_df$Purchase <- y_va
+
   # Try each k
   for (j in seq_along(k_grid)) {
     k <- k_grid[j]
+    k_use <- min(k, nrow(tr_df) - 1)
 
-    pred <- knn(train = X_tr, test = X_va, cl = y_tr, k = k, prob = TRUE)
-    p_win <- attr(pred, "prob")
-    p_hat <- ifelse(pred == "Yes", p_win, 1 - p_win)
+    fit <- kknn(Purchase ~ ., train = tr_df, test = va_df, k = k_use)
+    p_hat <- fit$prob[, "Yes"]
 
     scored <- tibble(Purchase = y_va, p_hat = p_hat)
 
@@ -214,15 +224,15 @@ best_k <- tune_tbl$k[1]
 cat("\nBest k by mean CV AUC:", best_k, "\n")
 
 # --- B3) Final one-time test AUC using best_k ---
-pred_best <- knn(train = X_train, test = X_test, cl = y_train, k = best_k, prob = TRUE)
-p_win_best <- attr(pred_best, "prob")
-p_hat_best <- ifelse(pred_best == "Yes", p_win_best, 1 - p_win_best)
+best_k_use <- min(best_k, nrow(train_df) - 1)
+
+fit_best <- kknn(Purchase ~ ., train = train_df, test = test_df, k = best_k_use)
+p_hat_best <- fit_best$prob[, "Yes"]
 
 scored_best <- tibble(Purchase = y_test, p_hat = p_hat_best)
-test_auc_best <- roc_auc(scored_best, truth = Purchase, estimate = p_hat, event_level = "second") %>%
+test_auc_best <- roc_auc(scored_best, truth = Purchase, p_hat, event_level = "second") %>%
   pull(.estimate)
 
 cat("\nFinal one-time TEST AUC for tuned KNN:\n")
 print(test_auc_best)
 
-cat("\nDone.\n")
