@@ -1,0 +1,475 @@
+---
+title: "Lecture 7 (Part 1): Model Selection & Regularization (ISLR Ch. 6)"
+subtitle: "Selecting predictors and tuning regularization with cross-validation"
+author: "FNCE 5352 — Financial Programming & Modeling (R Weeks 1–7)"
+date: "Spring 2026"
+format:
+  revealjs:
+    theme: white
+    css: course_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute: 
+  echo: true
+  eval: true
+  warning: false
+editor: source
+---
+
+## Tonight’s plan (Lecture 7)
+
+- Part 1: ISLR Ch. 6 — selecting predictors + regularization
+- Part 2: ISLR Ch. 7 — moving beyond linearity
+- Finish: ~30 min credit scoring project walkthrough
+
+::: notes
+Remind them: we’re staying conceptual. Implementation lives in the demo script.
+Tie back to Lecture 6: resampling/CV is our workhorse for model size + tuning.
+:::
+
+
+---
+
+## Why we care about model selection
+
+- In finance, we *always* have more potential predictors than we should trust
+- More predictors ⇒ more flexibility ⇒ easier to overfit
+- Also: interpretability matters (governance, auditability, model risk)
+
+::: notes
+Use a quick story: adding lots of correlated macro variables makes coefficients swing wildly.
+Set up bias–variance framing: selection/regularization are ways to control variance.
+:::
+
+
+---
+
+## Two different goals
+
+- **Prediction:** lower out-of-sample error
+- **Interpretation:** understand which predictors matter (direction + magnitude)
+- Often a trade-off: the best predictive model may be hard to explain
+
+::: notes
+Stress that Chapter 6 tools can serve both goals, but you need to be honest which goal you’re optimizing for.
+:::
+
+
+---
+
+## The core problem: $p$ feels large
+
+- Suppose we have $p$ candidate predictors
+- If we try *all* subsets: $2^p$ models (explodes fast)
+- Even if you can compute them, choosing among them is the real challenge
+
+::: notes
+Concrete numbers: p=20 ⇒ ~1 million subsets; p=40 ⇒ ~1 trillion.
+So we need smart search strategies and good selection criteria.
+:::
+
+
+---
+
+## Three families of solutions (Ch. 6)
+
+1. **Subset selection** (choose predictors, fit least squares / GLM)
+2. **Shrinkage / regularization** (keep predictors, shrink coefficients)
+3. **Dimension reduction** (not our focus tonight)
+
+::: notes
+We’ll spend most time on 1 and 2.
+Dimension reduction = PCA/PLS; mention later if asked.
+:::
+
+
+---
+
+## Train/test + CV reminder (from Lecture 6)
+
+- One split is noisy
+- CV estimates out-of-sample performance more reliably
+- We’ll reuse CV to pick: model size, $\lambda$, polynomial degree, spline df
+
+::: notes
+Reinforce vocabulary: training vs assessment folds.
+Also remind: test set is *held out* for final check—don’t tune on it.
+:::
+
+
+---
+
+## Subset selection: the idea
+
+- Goal: find a subset of predictors that “works well”
+- Fit the model *only* on that subset
+- Then evaluate / compare candidate subsets
+
+::: notes
+Emphasize: we’re not “discovering truth,” we’re choosing a useful approximation.
+Subset selection is discrete: predictor is in or out.
+:::
+
+
+---
+
+## Best subset selection (conceptual)
+
+- For each model size $k$ (0, 1, 2, …, $p$):
+- • search all subsets with $k$ predictors
+- • keep the best one (lowest RSS / highest likelihood)
+- Then choose $k$ using a selection rule (CV, AIC/BIC, etc.)
+
+::: notes
+This is the gold standard *search* for small p.
+But computationally expensive.
+:::
+
+
+---
+
+## Stepwise selection (practical search)
+
+- **Forward stepwise:** start empty, add the best next predictor each step
+- **Backward stepwise:** start full, remove the worst predictor each step
+- **Hybrid:** allow adds/removes
+
+::: notes
+Forward works when p is large but n is not huge.
+Backward requires fitting the full model first (so typically needs n > p).
+:::
+
+
+---
+
+## What stepwise is (and is not)
+
+- It’s a **greedy search** (locally optimal choices)
+- It may miss the best subset
+- But it’s often “good enough” and very interpretable
+
+::: notes
+Important caveat: p-values from stepwise are not honest after selection.
+We’re choosing a model; then inference is tricky.
+:::
+
+
+---
+
+## How do we choose model size $k$?
+
+- We need a rule for “best” complexity
+- **Option 1:** CV estimate of test error
+- **Option 2:** information criteria (AIC/BIC)
+- **Option 3:** adjusted $R^2$ (regression only)
+
+::: notes
+Preview: CV is aligned with our course spine.
+We’ll mention AIC/BIC/adjR2 conceptually but not derive them.
+:::
+
+
+---
+
+## Adjusted $R^2$ (quick intuition)
+
+- $R^2$ always increases when you add predictors
+- Adjusted $R^2$ adds a penalty for complexity
+- So it can go up or down when you add a variable
+
+::: notes
+This is a simple “complexity-aware” metric.
+But it’s still in-sample; CV is usually safer for prediction.
+:::
+
+
+---
+
+## AIC / BIC (quick intuition)
+
+- Start with goodness-of-fit (likelihood)
+- Subtract a penalty for number of parameters
+- BIC penalizes complexity more than AIC
+
+::: notes
+No derivations.
+Mention: in many business settings, BIC tends to choose smaller models (more parsimonious).
+:::
+
+
+---
+
+## CV for model size: the clean story
+
+- For each model size $k$:
+  - pick a specific subset (best/stepwise) *within each fold*
+  - evaluate on the fold’s assessment set
+- Choose $k$ with the lowest CV error
+
+::: notes
+This is subtle: selection must happen inside each resample to avoid optimistic bias.
+In practice, people often shortcut and still get usable results—note the tradeoff.
+:::
+
+
+---
+
+## Warning: selection can leak
+
+- If you pick predictors using the full dataset, then CV the chosen model:
+- you’re leaking information across folds
+- CV error will look better than it truly is
+
+::: notes
+This mirrors scaling/leakage with KNN.
+Same principle: anything “learned” must be learned inside each training fold.
+:::
+
+
+---
+
+## Subset selection in practice (what we’ll do in demo)
+
+- Use `leaps::regsubsets()` to run forward/backward stepwise
+- Look at metrics across model sizes (RSS, adj $R^2$, BIC)
+- Optionally: wrap in a simple CV loop for model size
+
+::: notes
+Keep it teachable: show the outputs visually.
+We’ll focus on the workflow rather than perfect engineering.
+:::
+
+
+---
+
+## Regularization: why shrink instead of drop?
+
+- When predictors are correlated, least squares coefficients can be unstable
+- Shrinkage trades a little bias for a lot less variance
+- Often improves out-of-sample performance
+
+::: notes
+This is the bias–variance trade.
+Bring back the idea: we’re controlling flexibility in a smoother way than “in/out.”
+:::
+
+
+---
+
+## Bias–variance framing (again)
+
+- More flexibility ⇒ lower bias, higher variance
+- Regularization intentionally increases bias
+- …to reduce variance and improve test performance
+
+::: notes
+Use the U-shaped test error picture.
+PASTE SCREENSHOT HERE — ISLR2e Ch. 2 bias–variance / test error vs flexibility figure (if you want).
+:::
+
+
+---
+
+## Ridge regression: the idea
+
+- Fit by minimizing: RSS $+ \lambda \sum_{j=1}^p \beta_j^2$
+- Penalty is squared coefficients (L2)
+- As $\lambda \uparrow$: coefficients shrink toward 0 (but usually not exactly 0)
+
+::: notes
+Ridge keeps all predictors but dampens them.
+Mention: we typically standardize predictors before ridge/lasso.
+:::
+
+
+---
+
+## Lasso: the idea
+
+- Fit by minimizing: RSS $+ \lambda \sum_{j=1}^p |\beta_j|$
+- Penalty is absolute coefficients (L1)
+- As $\lambda \uparrow$: some coefficients become exactly 0 (automatic selection)
+
+::: notes
+Lasso can produce sparse models.
+But if predictors are highly correlated, it may “pick one” somewhat arbitrarily.
+:::
+
+
+---
+
+## Ridge vs lasso with correlated predictors
+
+- If predictors are strongly correlated:
+- • **Ridge** tends to share weight across them
+- • **Lasso** tends to choose one and zero out others
+- In finance: correlated ratios/macros are common → ridge can be very stable
+
+::: notes
+Use this to motivate why ridge is often a nice first move in credit risk.
+But lasso is attractive for interpretability / sparse scorecards.
+:::
+
+
+---
+
+## The tuning knob: $\lambda$
+
+- $\lambda = 0$ ⇒ ordinary least squares / MLE
+- Large $\lambda$ ⇒ heavy shrinkage ⇒ underfit
+- So we need to *tune* $\lambda$ using CV
+
+::: notes
+Translate to their earlier KNN tuning: k was our knob; now lambda is the knob.
+:::
+
+
+---
+
+## Standardization matters
+
+- Regularization depends on coefficient magnitudes
+- Predictors on larger scales would dominate the penalty
+- So we standardize predictors (mean 0, sd 1) before ridge/lasso
+
+::: notes
+glmnet does this by default; still important to say it out loud.
+Also a good place to remind about leakage: standardize inside folds.
+:::
+
+
+---
+
+## Why we’ll implement with `glmnet`
+
+- It’s the standard tool in R for ridge/lasso
+- Efficient + stable implementations (coordinate descent)
+- Built-in cross-validation via `cv.glmnet()`
+
+::: notes
+Make an explicit course decision: we keep everything else base R, but glmnet is worth it.
+It won’t derail because the interface is simple and self-contained.
+:::
+
+
+---
+
+## Regularization for classification too
+
+- Same idea works for logistic regression
+- We penalize the log-likelihood instead of RSS
+- In credit scoring: penalized logistic is a common baseline
+
+::: notes
+This is the bridge to the project.
+We’ll use family='binomial' in glmnet.
+:::
+
+
+---
+
+## Tuning $\lambda$ with CV (workflow)
+
+- 1) build a model matrix $X$ and outcome $y$
+- 2) run `cv.glmnet(X, y, ...)`
+- 3) pick $\lambda$ (min CV error or 1-SE rule)
+- 4) refit on full training set and evaluate on test
+
+::: notes
+Emphasize: CV happens inside training; test is used once.
+Explain 1-SE rule: simpler model within 1 standard error of best.
+:::
+
+
+---
+
+## Choosing $\lambda$: min vs 1-SE
+
+- $\lambda_{min}$: best mean CV performance
+- $\lambda_{1se}$: more regularization, often simpler + more stable
+- In governance-heavy settings, $\lambda_{1se}$ is a defensible default
+
+::: notes
+This is a real-world model risk comment.
+You can trade a tiny bit of performance for stability and interpretability.
+:::
+
+
+---
+
+## Interpretability vs prediction (practical guidance)
+
+- If you need a simple, explainable model:
+- • consider lasso (sparse) or stepwise (few variables)
+- If you need robust prediction under correlation:
+- • ridge is often strong
+- Always validate with CV + a holdout test set
+
+::: notes
+Make them articulate which they’re optimizing.
+Tie to grading rubric in project later.
+:::
+
+
+---
+
+## Common pitfalls checklist
+
+- Leakage: feature selection/scaling done outside resampling
+- Tuning too many knobs on the test set
+- Treating selected-model p-values as “truth”
+- Forgetting stability (different folds → different models)
+
+::: notes
+This slide is your “model risk” slide.
+Give them habits: always keep a test set, keep a log of choices, sanity check stability.
+:::
+
+
+---
+
+## Mini roadmap: what you should be able to do after Part 1
+
+- Explain why more predictors can hurt out-of-sample performance
+- Describe best subset vs stepwise selection
+- Use CV to choose complexity ($k$ or $\lambda$)
+- Implement ridge/lasso with `glmnet` in R
+
+::: notes
+Transition into a short break before Part 2 if you want.
+:::
+
+
+---
+
+## PASTE SCREENSHOT HERE — ISLR Figure suggestions
+
+- Ch. 6: illustration of ridge vs lasso shrinkage paths
+- Ch. 6: CV curve vs $\log(\lambda)$ for ridge/lasso
+- Ch. 6: stepwise / best subset selection overview
+
+*(Add page numbers once you have your copy open.)*
+
+::: notes
+These are great visual anchors. Screenshot them into the deck if you want.
+If you skip screenshots, the demo script plots give the same intuition.
+:::
+

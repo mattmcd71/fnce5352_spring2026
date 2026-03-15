@@ -1,0 +1,501 @@
+---
+title: "Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)"
+subtitle: "Polynomials, splines, and a project roadmap"
+author: "FNCE 5352 — Financial Programming & Modeling (R Weeks 1–7)"
+date: "Spring 2026"
+format:
+  revealjs:
+    theme: white
+    css: course_minimal.css
+    slide-number: true
+    navigation-mode: linear
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    min-scale: 0.6
+    max-scale: 1.2
+    hash: true
+    progress: true
+    controls: true
+    preview-links: true
+    show-notes: false
+  pdf:
+    documentclass: article
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    geometry: margin=1in
+execute: 
+  echo: true
+  eval: true
+  warning: false
+editor: source
+---
+
+
+## Back from break: where we are
+
+- Part 2: ISLR Ch. 7 — relax the linearity assumption
+- Theme: **flexibility knobs** + **CV to choose them**
+- Then: credit scoring project walkthrough
+
+::: notes
+Re-anchor: we learned how to control complexity with subset selection / lambda.
+Now we control complexity by allowing *nonlinear effects*.
+:::
+
+
+---
+
+## Why linearity can fail
+
+- Real relationships often have:
+- • thresholds (cliffs)
+- • saturation (diminishing returns)
+- • asymmetry
+- Linear models can miss these patterns
+
+::: notes
+Finance examples: utilization vs default risk is nonlinear; balance effects can saturate.
+We’ll model this without going full black-box.
+:::
+
+
+---
+
+## Two strategies for nonlinearity
+
+- 1) engineer nonlinear features (polynomials, transforms, interactions)
+- 2) use models that learn smooth nonlinear functions (splines, GAMs)
+
+::: notes
+We’ll do both, but keep the implementation light.
+:::
+
+
+---
+
+## Polynomials: the simplest upgrade
+
+- Add $x^2, x^3, \dots$ to a linear model
+- Degree $d$ is a flexibility knob
+- Risk: high degrees can wiggle and overfit
+
+::: notes
+Students often overuse high-degree polynomials—emphasize CV for degree.
+:::
+
+
+---
+
+## Polynomial regression in R (tiny snippet)
+
+- Example: `lm(y ~ poly(x, degree = 3, raw = TRUE), data = df)`
+- Or explicitly: `lm(y ~ x + I(x^2) + I(x^3), data=df)`
+
+::: notes
+Don’t dwell on syntax. The demo script will show it live.
+Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret.
+:::
+
+
+---
+
+## Choosing polynomial degree with CV
+
+- Try degrees 1..D
+- For each degree: fit on training folds, score on assessment folds
+- Pick degree with lowest CV error (or 1-SE style)
+
+::: notes
+This directly mirrors KNN tuning and lambda tuning.
+Consistency is the point: one mental model for tuning.
+:::
+
+
+---
+
+## Polynomials can behave badly at the edges
+
+- They can explode outside the data range
+- They can create unrealistic oscillations near boundaries
+- Splines are a more stable alternative
+
+::: notes
+This is a nice conceptual reason to introduce splines.
+:::
+
+
+---
+
+## Splines: piecewise polynomials with continuity
+
+- Idea: use low-degree polynomials in regions
+- Join them smoothly at “knots”
+- Flexibility controlled by number of degrees of freedom / knots
+
+::: notes
+No derivations. Just intuition: local flexibility.
+Great for monotone-ish relationships like balance vs risk.
+:::
+
+
+---
+
+## Basis functions: how splines fit in linear regression
+
+- Even with splines, we’re still fitting a linear model:
+- $$y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon$$
+- Nonlinearity comes from the basis functions $b_j(x)$
+
+::: notes
+This is the key mental model.
+It also explains why we can keep using lm/glm workflows.
+:::
+
+
+---
+
+## Splines in R (tiny snippet)
+
+- Use `splines::bs(x, df = 6)` to build a spline basis
+- Then: `lm(y ~ bs(x, df=6), data=df)`
+
+::: notes
+Stress: `df` is the knob we tune.
+Also remind: `splines` is a base-recommended package.
+:::
+
+
+---
+
+## Natural splines (conceptual)
+
+- Natural splines constrain behavior at the boundaries
+- Often more stable for extrapolation
+- In R: `splines::ns(x, df = ...)`
+
+::: notes
+We may or may not demo ns, but mention it as a safer default.
+:::
+
+
+---
+
+## GAMs: generalized additive models (conceptual)
+
+- Model is a sum of smooth functions:
+- $$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + \varepsilon$$
+- Interpretable: you can plot each smooth effect
+- Still needs tuning (smoothness)
+
+::: notes
+Keep it minimal. GAM is a ‘nice-to-know’ tool that keeps interpretability.
+Useful in credit risk when relationships are nonlinear but you still need explainability.
+:::
+
+
+---
+
+## Minimal GAM in R (tiny snippet)
+
+- `library(mgcv)`
+- `gam(y ~ s(x1) + s(x2) + x3, data=df, family=binomial())`
+
+::: notes
+We’ll keep it optional in the demo.
+If mgcv installation is a worry, we can skip and focus on polynomials/splines.
+:::
+
+
+---
+
+## Selection again: every method has a knob
+
+- Polynomials: degree $d$
+- Splines: df / knots
+- GAMs: smoothness / basis dimension
+- Regularization: $\lambda$
+- We choose knobs with CV (and keep a final test set)
+
+::: notes
+This slide is the thesis of Lectures 6–7.
+Everything is just choosing a controlled amount of flexibility.
+:::
+
+
+---
+
+## How to read a spline model output
+
+- The coefficients are on basis functions (not directly on $x$)
+- Interpretation comes from plotting the fitted curve
+- So: focus on *shape*, not individual betas
+
+::: notes
+Students will try to interpret spline coefficients like linear coefficients—warn them.
+Emphasize plotting partial effects.
+:::
+
+
+---
+
+## Knots (conceptual) — where flexibility lives
+
+- Knots are locations where the piecewise polynomials join
+- More knots ⇒ more local flexibility
+- Using `df = ...` is often easier than picking knots by hand
+
+::: notes
+Keep it conceptual. If asked: knots can be quantiles of x.
+But we’ll tune df with CV.
+:::
+
+
+---
+
+## Nonlinearity for classification: same tools
+
+- Replace `lm()` with `glm(..., family=binomial())`
+- Polynomials/splines/GAMs still work
+- You still need CV + a test set
+
+::: notes
+This bridges directly to credit scoring.
+In the demo script we’ll use binomial models too.
+:::
+
+
+---
+
+## Model evaluation reminders (for the project)
+
+- AUC: ranking quality
+- Log loss: probability quality
+- Confusion matrix metrics depend on a threshold
+- In credit: threshold often comes from costs / capacity
+
+::: notes
+Keep it short but practical.
+If you already covered log loss earlier, mention it briefly without deep dive.
+:::
+
+
+---
+
+## Class imbalance (credit reality check)
+
+- Defaults are usually rare
+- Accuracy can be misleading (predict “no default” and look great)
+- Prefer AUC / PR-AUC / cost-based metrics; consider weighting
+
+::: notes
+This is a common project gotcha.
+Even if we don’t implement weighting, flag it as a lever.
+:::
+
+
+---
+
+## Quick aside: time series / rolling evaluation
+
+- If data are ordered in time:
+- random folds can leak the future into the past
+- Use rolling / expanding windows instead
+
+::: notes
+You mentioned this in Lecture 6. This is a quick reinforcement.
+No need to code it tonight—just awareness.
+:::
+
+
+---
+
+## From methods to project: what levers you now have
+
+- Baseline: logistic regression (linear log-odds)
+- Levers:
+- • regularization (ridge/lasso)
+- • nonlinear terms (poly/splines/GAM)
+- • feature engineering (transformations/interactions/missingness)
+
+::: notes
+Now we pivot to the credit scoring project.
+Make it feel like a toolbox that aligns to the lecture content.
+:::
+
+
+---
+
+## Credit scoring project: purpose
+
+- You’ll build a model that predicts default risk
+- Goal: strong out-of-sample performance
+- Constraints: avoid leakage; keep work reproducible
+
+::: notes
+Set expectations: this is realistic modeling work, not a math exercise.
+:::
+
+
+---
+
+## Data splits: roles (non-negotiable)
+
+- **Train:** fit models and do CV/tuning
+- **CV folds:** compare models + tune knobs
+- **Test:** final, once-only evaluation (no tuning)
+
+::: notes
+Hammer it: never tune on the test set.
+This is the main grading integrity point too.
+:::
+
+
+---
+
+## Deliverables (typical pattern)
+
+- 1) A reproducible R script / notebook that trains + validates
+- 2) A short write-up: what you tried and why
+- 3) A submission file with IDs + predicted probabilities (if required)
+
+::: notes
+Adjust to your actual repo structure.
+Even if the exact deliverables differ, this pattern fits most projects.
+:::
+
+
+---
+
+## Baseline model: logistic regression
+
+- Start with a simple GLM (binomial logit)
+- Pick a reasonable set of predictors
+- Establish a baseline metric on CV + test
+
+::: notes
+The baseline is essential for learning.
+Without it, improvements are meaningless.
+:::
+
+
+---
+
+## Metric choice (tie to Lecture 5)
+
+- If costs are symmetric: AUC can be a good ranking metric
+- If you will threshold decisions: consider cost-weighted error
+- Always report something interpretable
+
+::: notes
+Remind them: AUC doesn’t pick a threshold.
+If the project has costs, align metric to costs.
+:::
+
+
+---
+
+## Improvement lever 1: regularization (ridge/lasso)
+
+- Use `glmnet` with `family='binomial'`
+- Tune $\lambda$ via CV
+- Compare $\lambda_{min}$ vs $\lambda_{1se}$
+
+::: notes
+Tell them this is often the biggest ‘easy win’.
+Especially with correlated predictors / many engineered features.
+:::
+
+
+---
+
+## Improvement lever 2: nonlinear terms
+
+- Add polynomial terms for key variables
+- Try spline bases for smoother effects
+- Tune degree / df with CV (like any hyperparameter)
+
+::: notes
+Encourage one variable at a time so they can understand what changed.
+Avoid kitchen-sink feature explosion early.
+:::
+
+
+---
+
+## Improvement lever 3: feature engineering ideas
+
+- Missingness indicators (is.na flags)
+- Transforms: log(1+x), winsorization ideas
+- Interactions: e.g., income × utilization
+- Scaling (when needed) done *inside* resampling
+
+::: notes
+Keep it “candidate list,” not a mandate.
+Tie to finance intuition: ratios, saturations, thresholds.
+:::
+
+
+---
+
+## Project hygiene checklist
+
+- Set a seed; save splits; avoid re-splitting every run
+- Keep a clear train/CV/test separation
+- Log experiments: what changed, what improved
+- Sanity-check predictions (calibration-ish, extreme probs)
+
+::: notes
+This is the professional workflow.
+If they do nothing else, do these four things.
+:::
+
+
+---
+
+## Starter code walkthrough (what to look for)
+
+- Where the data live (folder path)
+- Where you define your split + folds
+- Where you compute metrics (yardstick allowed)
+- Where you write predictions to CSV
+
+::: notes
+You can tailor this live to the repo they have.
+Even if code differs, those are the anchor points.
+:::
+
+
+---
+
+## Suggested workflow for the next week
+
+- 1) Run baseline end-to-end
+- 2) Add one improvement lever at a time
+- 3) Compare using the same CV folds
+- 4) Freeze your final model; score test once; submit
+
+::: notes
+Tell them: do not chase tiny differences. Prefer stable gains.
+Use 1-SE style conservatism if they’re unsure.
+:::
+
+
+---
+
+## PASTE SCREENSHOT HERE — ISLR Figure suggestions
+
+- Ch. 7: polynomial fit vs spline fit illustration
+- Ch. 7: GAM component plots (if you want a visual)
+- Ch. 7: CV for selecting flexibility (degree/df)
+
+*(Add page numbers once you have your copy open.)*
+
+::: notes
+Again: optional screenshots. The demo script will create similar plots.
+End here so you can transition directly into live walkthrough.
+:::
+

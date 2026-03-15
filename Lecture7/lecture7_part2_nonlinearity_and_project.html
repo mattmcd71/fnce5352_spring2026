@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture7_part2_nonlinearity_and_project_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.26">
+
+  <meta name="author" content="FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)">
+  <meta name="dcterms.date" content="2026-01-01">
+  <title>Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="course_minimal.css">
+  <link href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)</h1>
+  <p class="subtitle">Polynomials, splines, and a project roadmap</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7) 
+</div>
+</div>
+</div>
+
+  <p class="date">2026-01-01</p>
+</section>
+<section id="back-from-break-where-we-are" class="slide level2">
+<h2>Back from break: where we are</h2>
+<ul>
+<li>Part 2: ISLR Ch. 7 — relax the linearity assumption</li>
+<li>Theme: <strong>flexibility knobs</strong> + <strong>CV to choose them</strong></li>
+<li>Then: credit scoring project walkthrough</li>
+</ul>
+<aside class="notes">
+<p>Re-anchor: we learned how to control complexity with subset selection / lambda. Now we control complexity by allowing <em>nonlinear effects</em>.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="why-linearity-can-fail" class="slide level2">
+<h2>Why linearity can fail</h2>
+<ul>
+<li>Real relationships often have:</li>
+<li>• thresholds (cliffs)</li>
+<li>• saturation (diminishing returns)</li>
+<li>• asymmetry</li>
+<li>Linear models can miss these patterns</li>
+</ul>
+<aside class="notes">
+<p>Finance examples: utilization vs default risk is nonlinear; balance effects can saturate. We’ll model this without going full black-box.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="two-strategies-for-nonlinearity" class="slide level2">
+<h2>Two strategies for nonlinearity</h2>
+<ul>
+<li><ol type="1">
+<li>engineer nonlinear features (polynomials, transforms, interactions)</li>
+</ol></li>
+<li><ol start="2" type="1">
+<li>use models that learn smooth nonlinear functions (splines, GAMs)</li>
+</ol></li>
+</ul>
+<aside class="notes">
+<p>We’ll do both, but keep the implementation light.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="polynomials-the-simplest-upgrade" class="slide level2">
+<h2>Polynomials: the simplest upgrade</h2>
+<ul>
+<li>Add <span class="math inline">\(x^2, x^3, \dots\)</span> to a linear model</li>
+<li>Degree <span class="math inline">\(d\)</span> is a flexibility knob</li>
+<li>Risk: high degrees can wiggle and overfit</li>
+</ul>
+<aside class="notes">
+<p>Students often overuse high-degree polynomials—emphasize CV for degree.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="polynomial-regression-in-r-tiny-snippet" class="slide level2">
+<h2>Polynomial regression in R (tiny snippet)</h2>
+<ul>
+<li>Example: <code>lm(y ~ poly(x, degree = 3, raw = TRUE), data = df)</code></li>
+<li>Or explicitly: <code>lm(y ~ x + I(x^2) + I(x^3), data=df)</code></li>
+</ul>
+<aside class="notes">
+<p>Don’t dwell on syntax. The demo script will show it live. Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="choosing-polynomial-degree-with-cv" class="slide level2">
+<h2>Choosing polynomial degree with CV</h2>
+<ul>
+<li>Try degrees 1..D</li>
+<li>For each degree: fit on training folds, score on assessment folds</li>
+<li>Pick degree with lowest CV error (or 1-SE style)</li>
+</ul>
+<aside class="notes">
+<p>This directly mirrors KNN tuning and lambda tuning. Consistency is the point: one mental model for tuning.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="polynomials-can-behave-badly-at-the-edges" class="slide level2">
+<h2>Polynomials can behave badly at the edges</h2>
+<ul>
+<li>They can explode outside the data range</li>
+<li>They can create unrealistic oscillations near boundaries</li>
+<li>Splines are a more stable alternative</li>
+</ul>
+<aside class="notes">
+<p>This is a nice conceptual reason to introduce splines.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="splines-piecewise-polynomials-with-continuity" class="slide level2">
+<h2>Splines: piecewise polynomials with continuity</h2>
+<ul>
+<li>Idea: use low-degree polynomials in regions</li>
+<li>Join them smoothly at “knots”</li>
+<li>Flexibility controlled by number of degrees of freedom / knots</li>
+</ul>
+<aside class="notes">
+<p>No derivations. Just intuition: local flexibility. Great for monotone-ish relationships like balance vs risk.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="basis-functions-how-splines-fit-in-linear-regression" class="slide level2">
+<h2>Basis functions: how splines fit in linear regression</h2>
+<ul>
+<li>Even with splines, we’re still fitting a linear model:</li>
+<li><span class="math display">\[y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon\]</span></li>
+<li>Nonlinearity comes from the basis functions <span class="math inline">\(b_j(x)\)</span></li>
+</ul>
+<aside class="notes">
+<p>This is the key mental model. It also explains why we can keep using lm/glm workflows.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="splines-in-r-tiny-snippet" class="slide level2">
+<h2>Splines in R (tiny snippet)</h2>
+<ul>
+<li>Use <code>splines::bs(x, df = 6)</code> to build a spline basis</li>
+<li>Then: <code>lm(y ~ bs(x, df=6), data=df)</code></li>
+</ul>
+<aside class="notes">
+<p>Stress: <code>df</code> is the knob we tune. Also remind: <code>splines</code> is a base-recommended package.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="natural-splines-conceptual" class="slide level2">
+<h2>Natural splines (conceptual)</h2>
+<ul>
+<li>Natural splines constrain behavior at the boundaries</li>
+<li>Often more stable for extrapolation</li>
+<li>In R: <code>splines::ns(x, df = ...)</code></li>
+</ul>
+<aside class="notes">
+<p>We may or may not demo ns, but mention it as a safer default.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="gams-generalized-additive-models-conceptual" class="slide level2">
+<h2>GAMs: generalized additive models (conceptual)</h2>
+<ul>
+<li>Model is a sum of smooth functions:</li>
+<li><span class="math display">\[y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + \varepsilon\]</span></li>
+<li>Interpretable: you can plot each smooth effect</li>
+<li>Still needs tuning (smoothness)</li>
+</ul>
+<aside class="notes">
+<p>Keep it minimal. GAM is a ‘nice-to-know’ tool that keeps interpretability. Useful in credit risk when relationships are nonlinear but you still need explainability.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="minimal-gam-in-r-tiny-snippet" class="slide level2">
+<h2>Minimal GAM in R (tiny snippet)</h2>
+<ul>
+<li><code>library(mgcv)</code></li>
+<li><code>gam(y ~ s(x1) + s(x2) + x3, data=df, family=binomial())</code></li>
+</ul>
+<aside class="notes">
+<p>We’ll keep it optional in the demo. If mgcv installation is a worry, we can skip and focus on polynomials/splines.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="selection-again-every-method-has-a-knob" class="slide level2">
+<h2>Selection again: every method has a knob</h2>
+<ul>
+<li>Polynomials: degree <span class="math inline">\(d\)</span></li>
+<li>Splines: df / knots</li>
+<li>GAMs: smoothness / basis dimension</li>
+<li>Regularization: <span class="math inline">\(\lambda\)</span></li>
+<li>We choose knobs with CV (and keep a final test set)</li>
+</ul>
+<aside class="notes">
+<p>This slide is the thesis of Lectures 6–7. Everything is just choosing a controlled amount of flexibility.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="how-to-read-a-spline-model-output" class="slide level2">
+<h2>How to read a spline model output</h2>
+<ul>
+<li>The coefficients are on basis functions (not directly on <span class="math inline">\(x\)</span>)</li>
+<li>Interpretation comes from plotting the fitted curve</li>
+<li>So: focus on <em>shape</em>, not individual betas</li>
+</ul>
+<aside class="notes">
+<p>Students will try to interpret spline coefficients like linear coefficients—warn them. Emphasize plotting partial effects.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="knots-conceptual-where-flexibility-lives" class="slide level2">
+<h2>Knots (conceptual) — where flexibility lives</h2>
+<ul>
+<li>Knots are locations where the piecewise polynomials join</li>
+<li>More knots ⇒ more local flexibility</li>
+<li>Using <code>df = ...</code> is often easier than picking knots by hand</li>
+</ul>
+<aside class="notes">
+<p>Keep it conceptual. If asked: knots can be quantiles of x. But we’ll tune df with CV.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="nonlinearity-for-classification-same-tools" class="slide level2">
+<h2>Nonlinearity for classification: same tools</h2>
+<ul>
+<li>Replace <code>lm()</code> with <code>glm(..., family=binomial())</code></li>
+<li>Polynomials/splines/GAMs still work</li>
+<li>You still need CV + a test set</li>
+</ul>
+<aside class="notes">
+<p>This bridges directly to credit scoring. In the demo script we’ll use binomial models too.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="model-evaluation-reminders-for-the-project" class="slide level2">
+<h2>Model evaluation reminders (for the project)</h2>
+<ul>
+<li>AUC: ranking quality</li>
+<li>Log loss: probability quality</li>
+<li>Confusion matrix metrics depend on a threshold</li>
+<li>In credit: threshold often comes from costs / capacity</li>
+</ul>
+<aside class="notes">
+<p>Keep it short but practical. If you already covered log loss earlier, mention it briefly without deep dive.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="class-imbalance-credit-reality-check" class="slide level2">
+<h2>Class imbalance (credit reality check)</h2>
+<ul>
+<li>Defaults are usually rare</li>
+<li>Accuracy can be misleading (predict “no default” and look great)</li>
+<li>Prefer AUC / PR-AUC / cost-based metrics; consider weighting</li>
+</ul>
+<aside class="notes">
+<p>This is a common project gotcha. Even if we don’t implement weighting, flag it as a lever.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="quick-aside-time-series-rolling-evaluation" class="slide level2">
+<h2>Quick aside: time series / rolling evaluation</h2>
+<ul>
+<li>If data are ordered in time:</li>
+<li>random folds can leak the future into the past</li>
+<li>Use rolling / expanding windows instead</li>
+</ul>
+<aside class="notes">
+<p>You mentioned this in Lecture 6. This is a quick reinforcement. No need to code it tonight—just awareness.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="from-methods-to-project-what-levers-you-now-have" class="slide level2">
+<h2>From methods to project: what levers you now have</h2>
+<ul>
+<li>Baseline: logistic regression (linear log-odds)</li>
+<li>Levers:</li>
+<li>• regularization (ridge/lasso)</li>
+<li>• nonlinear terms (poly/splines/GAM)</li>
+<li>• feature engineering (transformations/interactions/missingness)</li>
+</ul>
+<aside class="notes">
+<p>Now we pivot to the credit scoring project. Make it feel like a toolbox that aligns to the lecture content.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="credit-scoring-project-purpose" class="slide level2">
+<h2>Credit scoring project: purpose</h2>
+<ul>
+<li>You’ll build a model that predicts default risk</li>
+<li>Goal: strong out-of-sample performance</li>
+<li>Constraints: avoid leakage; keep work reproducible</li>
+</ul>
+<aside class="notes">
+<p>Set expectations: this is realistic modeling work, not a math exercise.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="data-splits-roles-non-negotiable" class="slide level2">
+<h2>Data splits: roles (non-negotiable)</h2>
+<ul>
+<li><strong>Train:</strong> fit models and do CV/tuning</li>
+<li><strong>CV folds:</strong> compare models + tune knobs</li>
+<li><strong>Test:</strong> final, once-only evaluation (no tuning)</li>
+</ul>
+<aside class="notes">
+<p>Hammer it: never tune on the test set. This is the main grading integrity point too.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="deliverables-typical-pattern" class="slide level2">
+<h2>Deliverables (typical pattern)</h2>
+<ul>
+<li><ol type="1">
+<li>A reproducible R script / notebook that trains + validates</li>
+</ol></li>
+<li><ol start="2" type="1">
+<li>A short write-up: what you tried and why</li>
+</ol></li>
+<li><ol start="3" type="1">
+<li>A submission file with IDs + predicted probabilities (if required)</li>
+</ol></li>
+</ul>
+<aside class="notes">
+<p>Adjust to your actual repo structure. Even if the exact deliverables differ, this pattern fits most projects.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="baseline-model-logistic-regression" class="slide level2">
+<h2>Baseline model: logistic regression</h2>
+<ul>
+<li>Start with a simple GLM (binomial logit)</li>
+<li>Pick a reasonable set of predictors</li>
+<li>Establish a baseline metric on CV + test</li>
+</ul>
+<aside class="notes">
+<p>The baseline is essential for learning. Without it, improvements are meaningless.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="metric-choice-tie-to-lecture-5" class="slide level2">
+<h2>Metric choice (tie to Lecture 5)</h2>
+<ul>
+<li>If costs are symmetric: AUC can be a good ranking metric</li>
+<li>If you will threshold decisions: consider cost-weighted error</li>
+<li>Always report something interpretable</li>
+</ul>
+<aside class="notes">
+<p>Remind them: AUC doesn’t pick a threshold. If the project has costs, align metric to costs.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="improvement-lever-1-regularization-ridgelasso" class="slide level2">
+<h2>Improvement lever 1: regularization (ridge/lasso)</h2>
+<ul>
+<li>Use <code>glmnet</code> with <code>family='binomial'</code></li>
+<li>Tune <span class="math inline">\(\lambda\)</span> via CV</li>
+<li>Compare <span class="math inline">\(\lambda_{min}\)</span> vs <span class="math inline">\(\lambda_{1se}\)</span></li>
+</ul>
+<aside class="notes">
+<p>Tell them this is often the biggest ‘easy win’. Especially with correlated predictors / many engineered features.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="improvement-lever-2-nonlinear-terms" class="slide level2">
+<h2>Improvement lever 2: nonlinear terms</h2>
+<ul>
+<li>Add polynomial terms for key variables</li>
+<li>Try spline bases for smoother effects</li>
+<li>Tune degree / df with CV (like any hyperparameter)</li>
+</ul>
+<aside class="notes">
+<p>Encourage one variable at a time so they can understand what changed. Avoid kitchen-sink feature explosion early.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="improvement-lever-3-feature-engineering-ideas" class="slide level2">
+<h2>Improvement lever 3: feature engineering ideas</h2>
+<ul>
+<li>Missingness indicators (is.na flags)</li>
+<li>Transforms: log(1+x), winsorization ideas</li>
+<li>Interactions: e.g., income × utilization</li>
+<li>Scaling (when needed) done <em>inside</em> resampling</li>
+</ul>
+<aside class="notes">
+<p>Keep it “candidate list,” not a mandate. Tie to finance intuition: ratios, saturations, thresholds.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="project-hygiene-checklist" class="slide level2">
+<h2>Project hygiene checklist</h2>
+<ul>
+<li>Set a seed; save splits; avoid re-splitting every run</li>
+<li>Keep a clear train/CV/test separation</li>
+<li>Log experiments: what changed, what improved</li>
+<li>Sanity-check predictions (calibration-ish, extreme probs)</li>
+</ul>
+<aside class="notes">
+<p>This is the professional workflow. If they do nothing else, do these four things.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="starter-code-walkthrough-what-to-look-for" class="slide level2">
+<h2>Starter code walkthrough (what to look for)</h2>
+<ul>
+<li>Where the data live (folder path)</li>
+<li>Where you define your split + folds</li>
+<li>Where you compute metrics (yardstick allowed)</li>
+<li>Where you write predictions to CSV</li>
+</ul>
+<aside class="notes">
+<p>You can tailor this live to the repo they have. Even if code differs, those are the anchor points.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="suggested-workflow-for-the-next-week" class="slide level2">
+<h2>Suggested workflow for the next week</h2>
+<ul>
+<li><ol type="1">
+<li>Run baseline end-to-end</li>
+</ol></li>
+<li><ol start="2" type="1">
+<li>Add one improvement lever at a time</li>
+</ol></li>
+<li><ol start="3" type="1">
+<li>Compare using the same CV folds</li>
+</ol></li>
+<li><ol start="4" type="1">
+<li>Freeze your final model; score test once; submit</li>
+</ol></li>
+</ul>
+<aside class="notes">
+<p>Tell them: do not chase tiny differences. Prefer stable gains. Use 1-SE style conservatism if they’re unsure.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="paste-screenshot-here-islr-figure-suggestions" class="slide level2">
+<h2>PASTE SCREENSHOT HERE — ISLR Figure suggestions</h2>
+<ul>
+<li>Ch. 7: polynomial fit vs spline fit illustration</li>
+<li>Ch. 7: GAM component plots (if you want a visual)</li>
+<li>Ch. 7: CV for selecting flexibility (degree/df)</li>
+</ul>
+<p><em>(Add page numbers once you have your copy open.)</em></p>
+<aside class="notes">
+<p>Again: optional screenshots. The demo script will create similar plots. End here so you can transition directly into live walkthrough.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture7_part2_nonlinearity_and_project_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: true,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 720,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 8.0e-2,
+
+        // Bounds for smallest/largest possible scale to apply to content
+        minScale: 0.6,
+
+        maxScale: 1.2,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
