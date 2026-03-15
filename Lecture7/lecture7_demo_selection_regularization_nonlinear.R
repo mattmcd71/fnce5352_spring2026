@@ -36,8 +36,8 @@ rmse_vec <- function(truth, estimate) {
 }
 
 # Helper: AUC for binary classification with probs for event="Yes"
+# Note: yardstick expects a factor with levels c("No","Yes"); event="second" means Yes is the event
 auc_yes <- function(truth_factor, prob_yes) {
-  # yardstick expects a factor with levels c("No","Yes") (event = "second")
   yardstick::roc_auc_vec(truth = truth_factor, estimate = prob_yes, event_level = "second")
 }
 
@@ -76,7 +76,22 @@ par(mfrow = c(1, 1))
 coef(regfit_fwd, id = which.min(sum_fwd$bic))
 
 # ---- 1B) CV for model size (simple, readable loop)
+# 
+# PSEUDOCODE (what we're doing):
+#   For each model size k = 1..19:
+#       For each fold i = 1..10:
+#           Fit forward stepwise on fold i's training data
+#           Score on fold i's assessment data
+#           Record error
+#       Average error across all folds
+#   Plot CV error vs k; pick k with lowest error
+#
+# KEY POINT: This is just "try each k, see which generalizes best."
+# DON'T get bogged down in loop syntax; focus on the OUTPUT (plot of k vs error).
+
 # IMPORTANT: selection must happen INSIDE each fold to avoid leakage.
+# This is the key difference: we're not picking predictors on the full data then CV-ing.
+# Instead, each fold independently selects its best subset.
 set.seed(5352)
 folds_hit <- vfold_cv(hit, v = 10)
 
@@ -109,24 +124,29 @@ plot(1:Kmax, mean_rmse_by_k, type = "b",
      xlab = "Model size (k predictors)",
      ylab = "10-fold CV RMSE")
 
-# Talking point: k is a hyperparameter chosen by CV, just like KNN's k or ridge's lambda.
+# ← FOCUS HERE: Look at the plot. Best k is the one with lowest CV error.
+# The loop is just a means to an end; the insight is in the plot.
 
 # ============================================================
 # 2) Regularization — ridge vs lasso via glmnet
 # ============================================================
 # We'll do ridge/lasso on the SAME Hitters regression problem first.
+# Note: glmnet automatically standardizes predictors inside its optimization,
+# but we need to understand what's happening conceptually.
 
 X_hit <- model.matrix(Salary ~ ., data = hit)[, -1]  # drop intercept
 y_hit <- hit$Salary
 
-# Ridge: alpha = 0
+# Ridge: alpha = 0 (L2 penalty: sum of squared coefficients)
 set.seed(5352)
 cv_ridge <- cv.glmnet(X_hit, y_hit, alpha = 0)  # gaussian is default
 plot(cv_ridge)
+# The vertical lines show lambda.min (best CV) and lambda.1se (1 SE rule: more conservative)
 cv_ridge$lambda.min
 cv_ridge$lambda.1se
 
-# Lasso: alpha = 1
+# Lasso: alpha = 1 (L1 penalty: sum of absolute coefficients)
+# Lasso tends to set some coefficients exactly to 0 (automatic variable selection)
 set.seed(5352)
 cv_lasso <- cv.glmnet(X_hit, y_hit, alpha = 1)
 plot(cv_lasso)
@@ -196,6 +216,19 @@ set.seed(5352)
 folds <- vfold_cv(train, v = 10, strata = default)
 
 # 4A) Tune polynomial degree for balance
+# 
+# PSEUDOCODE (what we're doing):
+#   For each degree d = 1, 2, 3, ..., 6:
+#       For each fold i:
+#           Fit logistic with poly(balance, degree=d) on fold i's training data
+#           Score on fold i's assessment data (AUC)
+#           Record AUC
+#       Average AUC across all folds
+#   Plot CV AUC vs degree; pick degree with highest AUC
+#
+# KEY: Same tuning algorithm as model size / lambda. Only the "knob" changes.
+# DON'T explain the loop; just show students the plot and say "pick the peak."
+
 degrees <- 1:6
 cv_auc_poly <- rep(NA_real_, length(degrees))
 
@@ -222,6 +255,9 @@ plot(degrees, cv_auc_poly, type = "b",
      xlab = "Polynomial degree",
      ylab = "10-fold CV AUC (train only)")
 
+# ← FOCUS HERE: Look at the plot. The peak is the best degree.
+# That's the whole point: which degree generalizes best?
+
 best_deg <- degrees[which.max(cv_auc_poly)]
 best_deg
 
@@ -232,6 +268,7 @@ p_test_poly <- predict(fit_poly, newdata = test, type = "response")
 auc_yes(y_test, p_test_poly)
 
 # 4B) Tune spline df for balance
+# Same workflow: for each df value, run CV, pick the one with lowest CV error
 dfs <- c(3, 4, 5, 6, 8, 10)
 cv_auc_spline <- rep(NA_real_, length(dfs))
 
@@ -244,6 +281,7 @@ for (i in seq_along(dfs)) {
     tr <- analysis(sp)
     va <- assessment(sp)
 
+    # bs() creates a spline basis; df controls flexibility (via knots)
     fit <- glm(default ~ bs(balance, df = df_i),
                data = tr, family = binomial())
 

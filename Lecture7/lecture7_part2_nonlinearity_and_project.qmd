@@ -52,9 +52,9 @@ Now we control complexity by allowing *nonlinear effects*.
 ## Why linearity can fail
 
 - Real relationships often have:
-- • thresholds (cliffs)
-- • saturation (diminishing returns)
-- • asymmetry
+  - thresholds (cliffs)
+  - saturation (diminishing returns)
+  - asymmetry
 - Linear models can miss these patterns
 
 ::: notes
@@ -105,13 +105,25 @@ Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret.
 
 ## Choosing polynomial degree with CV
 
-- Try degrees 1..D
-- For each degree: fit on training folds, score on assessment folds
-- Pick degree with lowest CV error (or 1-SE style)
+**Pseudocode: same algorithm, different knob**
+```
+For each degree d = 1, 2, 3, ..., D:
+    For each fold i:
+        Fit poly(balance, degree=d) on train fold i
+        Score on assessment fold i
+        Record error
+    Average error across folds
+Plot CV error vs degree
+Pick degree with lowest error
+```
+
+- Same mental model as model size / lambda tuning
+- Degree is the "flexibility knob"
 
 ::: notes
-This directly mirrors KNN tuning and lambda tuning.
-Consistency is the point: one mental model for tuning.
+This DIRECTLY mirrors KNN tuning (try k=1,2,...,pick best) and lambda tuning (try lambda, pick best).
+Don't explain the loop; explain the concept: "More flexibility = wigglier fit. CV tells us the sweet spot."
+Emphasize: the output is a simple plot. Look at it, pick the lowest point.
 :::
 
 
@@ -272,14 +284,14 @@ In the demo script we’ll use binomial models too.
 
 ## Model evaluation reminders (for the project)
 
-- AUC: ranking quality
-- Log loss: probability quality
-- Confusion matrix metrics depend on a threshold
-- In credit: threshold often comes from costs / capacity
+- **AUC:** ranking quality (threshold-agnostic); good for class imbalance
+- **Log loss (cross-entropy):** probability quality (penalizes overconfidence)
+- **Confusion matrix metrics:** precision, recall, F1 depend on a threshold choice
+- **In credit:** threshold often comes from costs/capacity; AUC and log-loss are safer defaults
 
 ::: notes
-Keep it short but practical.
-If you already covered log loss earlier, mention it briefly without deep dive.
+Emphasize: you pick the metric that matches your business objective.
+If the project specifies, use that. Otherwise, AUC or log-loss is a safe start.
 :::
 
 
@@ -317,9 +329,9 @@ No need to code it tonight—just awareness.
 
 - Baseline: logistic regression (linear log-odds)
 - Levers:
-- • regularization (ridge/lasso)
-- • nonlinear terms (poly/splines/GAM)
-- • feature engineering (transformations/interactions/missingness)
+  - regularization (ridge/lasso)
+  - nonlinear terms (poly/splines/GAM)
+  - feature engineering (transformations/interactions/missingness)
 
 ::: notes
 Now we pivot to the credit scoring project.
@@ -345,11 +357,13 @@ Set expectations: this is realistic modeling work, not a math exercise.
 ## Data splits: roles (non-negotiable)
 
 - **Train:** fit models and do CV/tuning
-- **CV folds:** compare models + tune knobs
+- **CV folds (inside Train):** compare models + tune knobs
 - **Test:** final, once-only evaluation (no tuning)
+- **Leakage example:** if you pick features on full data, then CV it → test error looks too good
 
 ::: notes
 Hammer it: never tune on the test set.
+Real-world example: "I looked at correlations in all rows, then CV'd the selected model. Big mistake—correlation overfit."
 This is the main grading integrity point too.
 :::
 
@@ -414,13 +428,15 @@ Especially with correlated predictors / many engineered features.
 
 ## Improvement lever 2: nonlinear terms
 
-- Add polynomial terms for key variables
-- Try spline bases for smoother effects
-- Tune degree / df with CV (like any hyperparameter)
+- Try polynomial terms (degree 2–3) for key variables one at a time
+- Try spline bases (df = 3–6) for smoother, more local effects
+- Tune degree / df with CV inside training set
+- Finance use: balance vs default may be threshold-like; utilization may saturate
 
 ::: notes
 Encourage one variable at a time so they can understand what changed.
 Avoid kitchen-sink feature explosion early.
+Use the CV curves from the demo to guide degree/df choices.
 :::
 
 
@@ -483,6 +499,21 @@ Tell them: do not chase tiny differences. Prefer stable gains.
 Use 1-SE style conservatism if they’re unsure.
 :::
 
+
+---
+
+## What success looks like (end-to-end project summary)
+
+1. **Baseline:** simple logistic GLM with standard predictors (establish benchmark)
+2. **Experiment:** try regularization, nonlinear terms, feature engineering separately
+3. **Validate:** report train/CV/test metrics consistently; show reproducible seed/splits
+4. **Document:** brief write-up explaining what you tried and why it worked (or didn't)
+5. **Submit:** predictions on test set (or specified format) with clear reproducibility
+
+::: notes
+This is your rubric. Do all five and you've done the work right.
+The goal is not perfection on AUC—it's showing you understand the workflow.
+:::
 
 ---
 

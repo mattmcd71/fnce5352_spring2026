@@ -166,10 +166,12 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="why-linearity-can-fail" class="slide level2">
 <h2>Why linearity can fail</h2>
 <ul>
-<li>Real relationships often have:</li>
-<li>• thresholds (cliffs)</li>
-<li>• saturation (diminishing returns)</li>
-<li>• asymmetry</li>
+<li>Real relationships often have:
+<ul>
+<li>thresholds (cliffs)</li>
+<li>saturation (diminishing returns)</li>
+<li>asymmetry</li>
+</ul></li>
 <li>Linear models can miss these patterns</li>
 </ul>
 <aside class="notes">
@@ -253,13 +255,21 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </section>
 <section id="choosing-polynomial-degree-with-cv" class="slide level2">
 <h2>Choosing polynomial degree with CV</h2>
+<p><strong>Pseudocode: same algorithm, different knob</strong></p>
+<pre><code>For each degree d = 1, 2, 3, ..., D:
+    For each fold i:
+        Fit poly(balance, degree=d) on train fold i
+        Score on assessment fold i
+        Record error
+    Average error across folds
+Plot CV error vs degree
+Pick degree with lowest error</code></pre>
 <ul>
-<li>Try degrees 1..D</li>
-<li>For each degree: fit on training folds, score on assessment folds</li>
-<li>Pick degree with lowest CV error (or 1-SE style)</li>
+<li>Same mental model as model size / lambda tuning</li>
+<li>Degree is the “flexibility knob”</li>
 </ul>
 <aside class="notes">
-<p>This directly mirrors KNN tuning and lambda tuning. Consistency is the point: one mental model for tuning.</p>
+<p>This DIRECTLY mirrors KNN tuning (try k=1,2,…,pick best) and lambda tuning (try lambda, pick best). Don’t explain the loop; explain the concept: “More flexibility = wigglier fit. CV tells us the sweet spot.” Emphasize: the output is a simple plot. Look at it, pick the lowest point.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -507,13 +517,13 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="model-evaluation-reminders-for-the-project" class="slide level2">
 <h2>Model evaluation reminders (for the project)</h2>
 <ul>
-<li>AUC: ranking quality</li>
-<li>Log loss: probability quality</li>
-<li>Confusion matrix metrics depend on a threshold</li>
-<li>In credit: threshold often comes from costs / capacity</li>
+<li><strong>AUC:</strong> ranking quality (threshold-agnostic); good for class imbalance</li>
+<li><strong>Log loss (cross-entropy):</strong> probability quality (penalizes overconfidence)</li>
+<li><strong>Confusion matrix metrics:</strong> precision, recall, F1 depend on a threshold choice</li>
+<li><strong>In credit:</strong> threshold often comes from costs/capacity; AUC and log-loss are safer defaults</li>
 </ul>
 <aside class="notes">
-<p>Keep it short but practical. If you already covered log loss earlier, mention it briefly without deep dive.</p>
+<p>Emphasize: you pick the metric that matches your business objective. If the project specifies, use that. Otherwise, AUC or log-loss is a safe start.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -572,10 +582,12 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <h2>From methods to project: what levers you now have</h2>
 <ul>
 <li>Baseline: logistic regression (linear log-odds)</li>
-<li>Levers:</li>
-<li>• regularization (ridge/lasso)</li>
-<li>• nonlinear terms (poly/splines/GAM)</li>
-<li>• feature engineering (transformations/interactions/missingness)</li>
+<li>Levers:
+<ul>
+<li>regularization (ridge/lasso)</li>
+<li>nonlinear terms (poly/splines/GAM)</li>
+<li>feature engineering (transformations/interactions/missingness)</li>
+</ul></li>
 </ul>
 <aside class="notes">
 <p>Now we pivot to the credit scoring project. Make it feel like a toolbox that aligns to the lecture content.</p>
@@ -616,11 +628,12 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <h2>Data splits: roles (non-negotiable)</h2>
 <ul>
 <li><strong>Train:</strong> fit models and do CV/tuning</li>
-<li><strong>CV folds:</strong> compare models + tune knobs</li>
+<li><strong>CV folds (inside Train):</strong> compare models + tune knobs</li>
 <li><strong>Test:</strong> final, once-only evaluation (no tuning)</li>
+<li><strong>Leakage example:</strong> if you pick features on full data, then CV it → test error looks too good</li>
 </ul>
 <aside class="notes">
-<p>Hammer it: never tune on the test set. This is the main grading integrity point too.</p>
+<p>Hammer it: never tune on the test set. Real-world example: “I looked at correlations in all rows, then CV’d the selected model. Big mistake—correlation overfit.” This is the main grading integrity point too.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -726,12 +739,13 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="improvement-lever-2-nonlinear-terms" class="slide level2">
 <h2>Improvement lever 2: nonlinear terms</h2>
 <ul>
-<li>Add polynomial terms for key variables</li>
-<li>Try spline bases for smoother effects</li>
-<li>Tune degree / df with CV (like any hyperparameter)</li>
+<li>Try polynomial terms (degree 2–3) for key variables one at a time</li>
+<li>Try spline bases (df = 3–6) for smoother, more local effects</li>
+<li>Tune degree / df with CV inside training set</li>
+<li>Finance use: balance vs default may be threshold-like; utilization may saturate</li>
 </ul>
 <aside class="notes">
-<p>Encourage one variable at a time so they can understand what changed. Avoid kitchen-sink feature explosion early.</p>
+<p>Encourage one variable at a time so they can understand what changed. Avoid kitchen-sink feature explosion early. Use the CV curves from the demo to guide degree/df choices.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -828,6 +842,29 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </ul>
 <aside class="notes">
 <p>Tell them: do not chase tiny differences. Prefer stable gains. Use 1-SE style conservatism if they’re unsure.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-success-looks-like-end-to-end-project-summary" class="slide level2">
+<h2>What success looks like (end-to-end project summary)</h2>
+<ol type="1">
+<li><strong>Baseline:</strong> simple logistic GLM with standard predictors (establish benchmark)</li>
+<li><strong>Experiment:</strong> try regularization, nonlinear terms, feature engineering separately</li>
+<li><strong>Validate:</strong> report train/CV/test metrics consistently; show reproducible seed/splits</li>
+<li><strong>Document:</strong> brief write-up explaining what you tried and why it worked (or didn’t)</li>
+<li><strong>Submit:</strong> predictions on test set (or specified format) with clear reproducibility</li>
+</ol>
+<aside class="notes">
+<p>This is your rubric. Do all five and you’ve done the work right. The goal is not perfection on AUC—it’s showing you understand the workflow.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;

@@ -292,9 +292,11 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="best-subset-selection-conceptual" class="slide level2">
 <h2>Best subset selection (conceptual)</h2>
 <ul>
-<li>For each model size <span class="math inline">\(k\)</span> (0, 1, 2, …, <span class="math inline">\(p\)</span>):</li>
-<li>• search all subsets with <span class="math inline">\(k\)</span> predictors</li>
-<li>• keep the best one (lowest RSS / highest likelihood)</li>
+<li>For each model size <span class="math inline">\(k\)</span> (0, 1, 2, …, <span class="math inline">\(p\)</span>):
+<ul>
+<li>search all subsets with <span class="math inline">\(k\)</span> predictors</li>
+<li>keep the best one (lowest RSS / highest likelihood)</li>
+</ul></li>
 <li>Then choose <span class="math inline">\(k\)</span> using a selection rule (CV, AIC/BIC, etc.)</li>
 </ul>
 <aside class="notes">
@@ -527,13 +529,19 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </section>
 <section id="ridge-regression-the-idea" class="slide level2">
 <h2>Ridge regression: the idea</h2>
+<p><strong>Optimization problem:</strong> <span class="math display">\[\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2\]</span></p>
+</section>
+<section id="intuition-the-budget-metaphor" class="slide level2">
+<h2>Intuition: the budget metaphor**</h2>
 <ul>
-<li>Fit by minimizing: RSS <span class="math inline">\(+ \lambda \sum_{j=1}^p \beta_j^2\)</span></li>
-<li>Penalty is squared coefficients (L2)</li>
-<li>As <span class="math inline">\(\lambda \uparrow\)</span>: coefficients shrink toward 0 (but usually not exactly 0)</li>
+<li>Think of <span class="math inline">\(\lambda\)</span> as a “budget” for coefficient spending</li>
+<li>Each unit of <span class="math inline">\(|\beta_j|\)</span> costs you: the squared amount goes against your budget</li>
+<li>Ridge penalizes <em>large</em> coefficients: <span class="math inline">\(\beta_j = 0.1\)</span> costs <span class="math inline">\(0.01\)</span>; <span class="math inline">\(\beta_j = 1.0\)</span> costs <span class="math inline">\(1.00\)</span></li>
+<li>So ridge “spreads” the weight around: better to use many small coefficients than a few huge ones</li>
+<li>When <span class="math inline">\(\lambda \uparrow\)</span> (budget shrinks): all coefficients shrink toward 0 (usually not exactly 0)</li>
 </ul>
 <aside class="notes">
-<p>Ridge keeps all predictors but dampens them. Mention: we typically standardize predictors before ridge/lasso.</p>
+<p>Use finance framing: “We have a limited budget to allocate among predictors. Ridge says: use many predictors a little bit rather than a few predictors a lot.” This is why ridge keeps all predictors but dampens them. Mention: we standardize because we don’t want units to affect the budget!</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -548,13 +556,26 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </section>
 <section id="lasso-the-idea" class="slide level2">
 <h2>Lasso: the idea</h2>
+<p><strong>Optimization problem:</strong> <span class="math display">\[\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p |\beta_j|\]</span></p>
+</section>
+<section id="intuition-same-budget-different-penalty" class="slide level2">
+<h2>Intuition: same budget, different penalty**</h2>
 <ul>
-<li>Fit by minimizing: RSS <span class="math inline">\(+ \lambda \sum_{j=1}^p |\beta_j|\)</span></li>
-<li>Penalty is absolute coefficients (L1)</li>
-<li>As <span class="math inline">\(\lambda \uparrow\)</span>: some coefficients become exactly 0 (automatic selection)</li>
+<li>Lasso also has a budget <span class="math inline">\(\lambda\)</span>, but it penalizes <em>absolute values</em> (L1)</li>
+<li>Ridge penalizes squared: <span class="math inline">\(\beta_j = 0.1\)</span> costs <span class="math inline">\(0.01\)</span>; Lasso penalizes linear: <span class="math inline">\(\beta_j = 0.1\)</span> costs <span class="math inline">\(0.1\)</span></li>
+<li><strong>Result:</strong> Lasso prefers <em>sparse</em> solutions (exact zeros)
+<ul>
+<li>It’s cheaper to drop a predictor entirely than shrink it a little bit</li>
+<li>With high <span class="math inline">\(\lambda\)</span>: many coefficients snap exactly to 0 (automatic feature selection)</li>
+</ul></li>
+</ul>
+<p><strong>Why Lasso picks sparsity:</strong></p>
+<ul>
+<li>Ridge budget: spread weight thinly (many small coefficients)</li>
+<li>Lasso budget: spend heavily on a few, or go to zero (binary decision)</li>
 </ul>
 <aside class="notes">
-<p>Lasso can produce sparse models. But if predictors are highly correlated, it may “pick one” somewhat arbitrarily.</p>
+<p>The geometry intuition: L2 ball (ridge) is smooth; L1 diamond (lasso) has pointy corners. Sparse solutions live at the corners of the lasso budget region. But for now: intuition is “ridge shrinks, lasso sparsifies.”</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -570,9 +591,11 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="ridge-vs-lasso-with-correlated-predictors" class="slide level2">
 <h2>Ridge vs lasso with correlated predictors</h2>
 <ul>
-<li>If predictors are strongly correlated:</li>
-<li>• <strong>Ridge</strong> tends to share weight across them</li>
-<li>• <strong>Lasso</strong> tends to choose one and zero out others</li>
+<li>If predictors are strongly correlated:
+<ul>
+<li><strong>Ridge</strong> tends to share weight across them</li>
+<li><strong>Lasso</strong> tends to choose one and zero out others</li>
+</ul></li>
 <li>In finance: correlated ratios/macros are common → ridge can be very stable</li>
 </ul>
 <aside class="notes">
@@ -612,13 +635,33 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </section>
 <section id="standardization-matters" class="slide level2">
 <h2>Standardization matters</h2>
+<p><strong>The budget principle: units shouldn’t matter</strong></p>
 <ul>
-<li>Regularization depends on coefficient magnitudes</li>
-<li>Predictors on larger scales would dominate the penalty</li>
-<li>So we standardize predictors (mean 0, sd 1) before ridge/lasso</li>
+<li>Remember: regularization penalizes coefficient magnitudes using your “<span class="math inline">\(\lambda\)</span> budget”</li>
+<li>If we measure one predictor in centimeters and another in miles, the “cost” is unfair</li>
+<li>Example: <span class="math inline">\(\beta_{\text{centimeters}} = 100\)</span> (in budget) vs <span class="math inline">\(\beta_{\text{miles}} = 0.001\)</span> (tiny!)</li>
+<li><strong>Solution:</strong> Standardize all predictors to mean 0, SD 1 before fitting
+<ul>
+<li>Now <span class="math inline">\(|\beta| = 0.1\)</span> means the same thing regardless of original units</li>
+<li>Fair budget allocation</li>
+</ul></li>
+</ul>
+</section>
+<section id="why-standardize-inside-folds" class="slide level2">
+<h2>Why standardize <em>inside</em> folds?</h2>
+<ul>
+<li>If you standardize on the full dataset, then fit/CV on folds: you leak information</li>
+<li>Each fold should “learn” its own mean/SD from training data only</li>
+<li>Otherwise: CV folds know the global reference point → overly optimistic error estimates</li>
+</ul>
+<p><strong>In practice:</strong></p>
+<ul>
+<li><code>glmnet</code> standardizes by default (good!)</li>
+<li>But you must understand the leakage principle if you write custom tuning code</li>
+<li>Same principle as scaling in KNN (Lecture 6)</li>
 </ul>
 <aside class="notes">
-<p>glmnet does this by default; still important to say it out loud. Also a good place to remind about leakage: standardize inside folds.</p>
+<p>Use the budget intuition: “We’re allocating a budget to coefficients. Units shouldn’t matter—a coefficient of 0.1 in miles should cost the same as 0.1 in centimeters. Standardization makes the penalty fair.” Then hit the leakage point: standardize inside each fold’s training data, not globally.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -673,24 +716,23 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
           display:block!important;
       }</style></aside>
 </section>
-<section id="tuning-lambda-with-cv-workflow" class="slide level2">
-<h2>Tuning <span class="math inline">\(\lambda\)</span> with CV (workflow)</h2>
+<section id="tuning-lambda-with-cv-the-algorithm" class="slide level2">
+<h2>Tuning <span class="math inline">\(\lambda\)</span> with CV: the algorithm</h2>
+<p><strong>Pseudocode: what <code>cv.glmnet()</code> does</strong></p>
+<pre><code>For each lambda value (high to low):
+    For each fold i = 1, 2, ..., 10:
+        Fit ridge/lasso on train fold i (with this lambda)
+        Score on assessment fold i
+        Record error
+    Average error across all folds
+Plot CV error vs log(lambda)
+Pick lambda with lowest average error (or 1-SE rule)</code></pre>
 <ul>
-<li><ol type="1">
-<li>build a model matrix <span class="math inline">\(X\)</span> and outcome <span class="math inline">\(y\)</span></li>
-</ol></li>
-<li><ol start="2" type="1">
-<li>run <code>cv.glmnet(X, y, ...)</code></li>
-</ol></li>
-<li><ol start="3" type="1">
-<li>pick <span class="math inline">\(\lambda\)</span> (min CV error or 1-SE rule)</li>
-</ol></li>
-<li><ol start="4" type="1">
-<li>refit on full training set and evaluate on test</li>
-</ol></li>
+<li><strong>Concept:</strong> “Which amount of shrinkage generalizes best?”</li>
+<li><strong>1-SE rule:</strong> pick a slightly larger <span class="math inline">\(\lambda\)</span> (more stable, simpler)</li>
 </ul>
 <aside class="notes">
-<p>Emphasize: CV happens inside training; test is used once. Explain 1-SE rule: simpler model within 1 standard error of best.</p>
+<p>The beauty: glmnet does this loop for you. We just call cv.glmnet() once and get the plot. Focus on the output (CV curve). Students don’t need to understand the loop; they need to understand: “More lambda = more shrinkage = simpler. CV tells us which is best.”</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -727,10 +769,14 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <section id="interpretability-vs-prediction-practical-guidance" class="slide level2">
 <h2>Interpretability vs prediction (practical guidance)</h2>
 <ul>
-<li>If you need a simple, explainable model:</li>
-<li>• consider lasso (sparse) or stepwise (few variables)</li>
-<li>If you need robust prediction under correlation:</li>
-<li>• ridge is often strong</li>
+<li>If you need a simple, explainable model:
+<ul>
+<li>consider lasso (sparse) or stepwise (few variables)</li>
+</ul></li>
+<li>If you need robust prediction under correlation:
+<ul>
+<li>ridge is often strong</li>
+</ul></li>
 <li>Always validate with CV + a holdout test set</li>
 </ul>
 <aside class="notes">
@@ -791,12 +837,34 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
           display:block!important;
       }</style></aside>
 </section>
+<section id="bridge-to-part-2-same-tuning-philosophy-everywhere" class="slide level2">
+<h2>Bridge to Part 2: same tuning philosophy everywhere</h2>
+<ul>
+<li>Subset selection: CV to pick model size <span class="math inline">\(k\)</span></li>
+<li>Regularization: CV to pick <span class="math inline">\(\lambda\)</span> (then use <span class="math inline">\(\lambda_{1se}\)</span> for stability)</li>
+<li><strong>Next:</strong> polynomials, splines, GAMs all have knobs tuned the same way</li>
+<li>The pattern is: <strong>more flexibility + CV + test set</strong> (no magic, just discipline)</li>
+</ul>
+<aside class="notes">
+<p>Anchor this before the break. When we move to Part 2, remind them: we’re doing the same thing with different “knobs.”</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
 <section id="paste-screenshot-here-islr-figure-suggestions" class="slide level2">
 <h2>PASTE SCREENSHOT HERE — ISLR Figure suggestions</h2>
 <ul>
-<li>Ch. 6: illustration of ridge vs lasso shrinkage paths</li>
-<li>Ch. 6: CV curve vs <span class="math inline">\(\log(\lambda)\)</span> for ridge/lasso</li>
-<li>Ch. 6: stepwise / best subset selection overview</li>
+<li>Ch. 6.6: illustration of ridge vs lasso shrinkage paths (compare L2 vs L1 geometry)</li>
+<li>Ch. 6.6.2: CV curve vs <span class="math inline">\(\log(\lambda)\)</span> for ridge/lasso (show min vs 1-SE)</li>
+<li>Ch. 6.2: stepwise selection algorithm and overview</li>
 </ul>
 <p><em>(Add page numbers once you have your copy open.)</em></p>
 <aside class="notes">

@@ -134,8 +134,8 @@ Subset selection is discrete: predictor is in or out.
 ## Best subset selection (conceptual)
 
 - For each model size $k$ (0, 1, 2, …, $p$):
-- • search all subsets with $k$ predictors
-- • keep the best one (lowest RSS / highest likelihood)
+  - search all subsets with $k$ predictors
+  - keep the best one (lowest RSS / highest likelihood)
 - Then choose $k$ using a selection rule (CV, AIC/BIC, etc.)
 
 ::: notes
@@ -290,13 +290,22 @@ PASTE SCREENSHOT HERE — ISLR2e Ch. 2 bias–variance / test error vs flexibili
 
 ## Ridge regression: the idea
 
-- Fit by minimizing: RSS $+ \lambda \sum_{j=1}^p \beta_j^2$
-- Penalty is squared coefficients (L2)
-- As $\lambda \uparrow$: coefficients shrink toward 0 (but usually not exactly 0)
+**Optimization problem:**
+$$\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2$$
+
+## Intuition: the budget metaphor**
+
+- Think of $\lambda$ as a "budget" for coefficient spending
+- Each unit of $|\beta_j|$ costs you: the squared amount goes against your budget
+- Ridge penalizes *large* coefficients: $\beta_j = 0.1$ costs $0.01$; $\beta_j = 1.0$ costs $1.00$
+- So ridge "spreads" the weight around: better to use many small coefficients than a few huge ones
+- When $\lambda \uparrow$ (budget shrinks): all coefficients shrink toward 0 (usually not exactly 0)
 
 ::: notes
-Ridge keeps all predictors but dampens them.
-Mention: we typically standardize predictors before ridge/lasso.
+Use finance framing: "We have a limited budget to allocate among predictors. 
+Ridge says: use many predictors a little bit rather than a few predictors a lot."
+This is why ridge keeps all predictors but dampens them.
+Mention: we standardize because we don't want units to affect the budget!
 :::
 
 
@@ -304,23 +313,34 @@ Mention: we typically standardize predictors before ridge/lasso.
 
 ## Lasso: the idea
 
-- Fit by minimizing: RSS $+ \lambda \sum_{j=1}^p |\beta_j|$
-- Penalty is absolute coefficients (L1)
-- As $\lambda \uparrow$: some coefficients become exactly 0 (automatic selection)
+**Optimization problem:**
+$$\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p |\beta_j|$$
+
+## Intuition: same budget, different penalty**
+
+- Lasso also has a budget $\lambda$, but it penalizes *absolute values* (L1)
+- Ridge penalizes squared: $\beta_j = 0.1$ costs $0.01$; Lasso penalizes linear: $\beta_j = 0.1$ costs $0.1$
+- **Result:** Lasso prefers *sparse* solutions (exact zeros)
+  - It's cheaper to drop a predictor entirely than shrink it a little bit
+  - With high $\lambda$: many coefficients snap exactly to 0 (automatic feature selection)
+
+**Why Lasso picks sparsity:**
+
+- Ridge budget: spread weight thinly (many small coefficients)
+- Lasso budget: spend heavily on a few, or go to zero (binary decision)
 
 ::: notes
-Lasso can produce sparse models.
-But if predictors are highly correlated, it may “pick one” somewhat arbitrarily.
+The geometry intuition: L2 ball (ridge) is smooth; L1 diamond (lasso) has pointy corners.
+Sparse solutions live at the corners of the lasso budget region.
+But for now: intuition is "ridge shrinks, lasso sparsifies."
 :::
-
-
 ---
 
 ## Ridge vs lasso with correlated predictors
 
 - If predictors are strongly correlated:
-- • **Ridge** tends to share weight across them
-- • **Lasso** tends to choose one and zero out others
+  - **Ridge** tends to share weight across them
+  - **Lasso** tends to choose one and zero out others
 - In finance: correlated ratios/macros are common → ridge can be very stable
 
 ::: notes
@@ -346,13 +366,32 @@ Translate to their earlier KNN tuning: k was our knob; now lambda is the knob.
 
 ## Standardization matters
 
-- Regularization depends on coefficient magnitudes
-- Predictors on larger scales would dominate the penalty
-- So we standardize predictors (mean 0, sd 1) before ridge/lasso
+**The budget principle: units shouldn't matter**
+
+- Remember: regularization penalizes coefficient magnitudes using your "$\lambda$ budget"
+- If we measure one predictor in centimeters and another in miles, the "cost" is unfair
+- Example: $\beta_{\text{centimeters}} = 100$ (in budget) vs $\beta_{\text{miles}} = 0.001$ (tiny!)
+- **Solution:** Standardize all predictors to mean 0, SD 1 before fitting
+  - Now $|\beta| = 0.1$ means the same thing regardless of original units
+  - Fair budget allocation
+
+## Why standardize *inside* folds?
+
+- If you standardize on the full dataset, then fit/CV on folds: you leak information
+- Each fold should "learn" its own mean/SD from training data only
+- Otherwise: CV folds know the global reference point → overly optimistic error estimates
+
+**In practice:**
+
+- `glmnet` standardizes by default (good!)
+- But you must understand the leakage principle if you write custom tuning code
+- Same principle as scaling in KNN (Lecture 6)
 
 ::: notes
-glmnet does this by default; still important to say it out loud.
-Also a good place to remind about leakage: standardize inside folds.
+Use the budget intuition: "We're allocating a budget to coefficients. 
+Units shouldn't matter—a coefficient of 0.1 in miles should cost the same as 0.1 in centimeters.
+Standardization makes the penalty fair."
+Then hit the leakage point: standardize inside each fold's training data, not globally.
 :::
 
 
@@ -386,16 +425,27 @@ We’ll use family='binomial' in glmnet.
 
 ---
 
-## Tuning $\lambda$ with CV (workflow)
+## Tuning $\lambda$ with CV: the algorithm
 
-- 1) build a model matrix $X$ and outcome $y$
-- 2) run `cv.glmnet(X, y, ...)`
-- 3) pick $\lambda$ (min CV error or 1-SE rule)
-- 4) refit on full training set and evaluate on test
+**Pseudocode: what `cv.glmnet()` does**
+```
+For each lambda value (high to low):
+    For each fold i = 1, 2, ..., 10:
+        Fit ridge/lasso on train fold i (with this lambda)
+        Score on assessment fold i
+        Record error
+    Average error across all folds
+Plot CV error vs log(lambda)
+Pick lambda with lowest average error (or 1-SE rule)
+```
+
+- **Concept:** "Which amount of shrinkage generalizes best?"
+- **1-SE rule:** pick a slightly larger $\lambda$ (more stable, simpler)
 
 ::: notes
-Emphasize: CV happens inside training; test is used once.
-Explain 1-SE rule: simpler model within 1 standard error of best.
+The beauty: glmnet does this loop for you. We just call cv.glmnet() once and get the plot.
+Focus on the output (CV curve). Students don't need to understand the loop; they need to understand:
+  "More lambda = more shrinkage = simpler. CV tells us which is best."
 :::
 
 
@@ -418,9 +468,9 @@ You can trade a tiny bit of performance for stability and interpretability.
 ## Interpretability vs prediction (practical guidance)
 
 - If you need a simple, explainable model:
-- • consider lasso (sparse) or stepwise (few variables)
+  - consider lasso (sparse) or stepwise (few variables)
 - If you need robust prediction under correlation:
-- • ridge is often strong
+  - ridge is often strong
 - Always validate with CV + a holdout test set
 
 ::: notes
@@ -460,11 +510,25 @@ Transition into a short break before Part 2 if you want.
 
 ---
 
+## Bridge to Part 2: same tuning philosophy everywhere
+
+- Subset selection: CV to pick model size $k$
+- Regularization: CV to pick $\lambda$ (then use $\lambda_{1se}$ for stability)
+- **Next:** polynomials, splines, GAMs all have knobs tuned the same way
+- The pattern is: **more flexibility + CV + test set** (no magic, just discipline)
+
+::: notes
+Anchor this before the break.
+When we move to Part 2, remind them: we're doing the same thing with different "knobs."
+:::
+
+---
+
 ## PASTE SCREENSHOT HERE — ISLR Figure suggestions
 
-- Ch. 6: illustration of ridge vs lasso shrinkage paths
-- Ch. 6: CV curve vs $\log(\lambda)$ for ridge/lasso
-- Ch. 6: stepwise / best subset selection overview
+- Ch. 6.6: illustration of ridge vs lasso shrinkage paths (compare L2 vs L1 geometry)
+- Ch. 6.6.2: CV curve vs $\log(\lambda)$ for ridge/lasso (show min vs 1-SE)
+- Ch. 6.2: stepwise selection algorithm and overview
 
 *(Add page numbers once you have your copy open.)*
 
