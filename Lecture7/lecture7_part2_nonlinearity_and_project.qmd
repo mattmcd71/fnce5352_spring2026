@@ -67,8 +67,8 @@ We’ll model this without going full black-box.
 
 ## Two strategies for nonlinearity
 
-- 1) engineer nonlinear features (polynomials, transforms, interactions)
-- 2) use models that learn smooth nonlinear functions (splines, GAMs)
+1. Engineer nonlinear features (polynomials, transforms, interactions)
+2. Use models that learn smooth nonlinear functions (splines, GAMs)
 
 ::: notes
 We’ll do both, but keep the implementation light.
@@ -95,9 +95,17 @@ Students often overuse high-degree polynomials—emphasize CV for degree.
 - Example: `lm(y ~ poly(x, degree = 3, raw = TRUE), data = df)`
 - Or explicitly: `lm(y ~ x + I(x^2) + I(x^3), data=df)`
 
+**Why `I()` around `x^2`, `x^3`?**
+
+- In R formulas, `^` means "interaction/nesting", not exponentiation
+- `I()` ("AsIs") forces the expression to be evaluated literally: `x^2` becomes $x^2$, not interaction
+- Without `I()`: formula would try to fit `x * x` (interaction), not `x` squared
+
+
 ::: notes
 Don’t dwell on syntax. The demo script will show it live.
 Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret.
+The key: students often forget `I()` and get confused. Highlight it once, then move on.
 :::
 
 
@@ -131,12 +139,43 @@ Emphasize: the output is a simple plot. Look at it, pick the lowest point.
 
 ## Polynomials can behave badly at the edges
 
-- They can explode outside the data range
-- They can create unrealistic oscillations near boundaries
-- Splines are a more stable alternative
+**Interpolation vs. extrapolation:**
+
+- High-degree polynomials fit beautifully *within* the domain of your training data
+- But *outside* that domain, they can explode or oscillate wildly
+- This is a fundamental limitation: you're fitting a function with no anchor beyond the edges
 
 ::: notes
-This is a nice conceptual reason to introduce splines.
+You fit a 7th-degree polynomial to data from $x \in [0, 100]$. What does it do at $x = 200$ or $x = -50$? Usually: nonsense.
+:::
+
+
+---
+
+## Why extrapolation matters in finance
+
+**Stress testing & scenario analysis:**
+
+- Your training data covers a range of market conditions (e.g., credit spreads 50–200 bps)
+- But stress testing, scenario analysis, and regulatory models often *extrapolate*: "What if spreads hit 500 bps?"
+- A high-degree polynomial trained on historical data can give you nonsense in stressed scenarios
+- This is a *feature risk*: your model works great on familiar terrain, but fails when the market moves into new territory
+
+::: notes
+Rate hikes, recession scenarios, tail-risk VaR—these are extrapolation problems. The model has never seen this regime, so you need something more stable than a high-degree polynomial.
+:::
+
+
+---
+
+## The fix: splines or domain constraints
+
+**Splines (next):** piecewise low-degree polynomials have stable extrapolation behavior
+
+**Or domain knowledge:** explicit bounds, simpler functional form for tails, regularization toward economic intuition
+
+::: notes
+Both approaches acknowledge: don't let the data fit whatever shape it wants outside the training domain. Constrain the model to behave sensibly when extrapolating.
 :::
 
 
@@ -156,15 +195,24 @@ Great for monotone-ish relationships like balance vs risk.
 
 ---
 
-## Basis functions: how splines fit in linear regression
+## Basis functions: how splines fit in linear regression {.smaller}
 
-- Even with splines, we’re still fitting a linear model:
-- $$y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon$$
-- Nonlinearity comes from the basis functions $b_j(x)$
+**The trick: convert nonlinearity into a linear problem**
+
+$$y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon$$
+
+- $b_j(x)$ are *basis functions*: pre-computed transformations of $x$
+- For splines: each basis function is a "bump" or polynomial piece
+- We fit *linear* coefficients $\beta_j$ to these transformations
+- Nonlinearity comes from the basis functions, not the fitting algorithm
+
+**Why this matters:**
+
+- We can reuse everything: `lm()`, `glm()`, `coef()`, prediction intervals, inference
+- We just pre-process $x$ first
 
 ::: notes
-This is the key mental model.
-It also explains why we can keep using lm/glm workflows.
+This is the key mental model. It explains why splines aren't a completely new tool—they're basis feature engineering + linear regression. You can use all your existing workflow.
 :::
 
 
@@ -183,29 +231,59 @@ Also remind: `splines` is a base-recommended package.
 
 ---
 
-## Natural splines (conceptual)
+## Natural splines: what's different?
 
-- Natural splines constrain behavior at the boundaries
-- Often more stable for extrapolation
-- In R: `splines::ns(x, df = ...)`
+**Regular splines (B-splines) vs. natural splines**
+
+- Regular splines are flexible but can behave oddly at the boundaries
+- *Natural* splines add boundary constraints: force the function to be *linear* beyond the boundaries
+- This means: outside your training domain, it extrapolates linearly (stable, sensible)
 
 ::: notes
-We may or may not demo ns, but mention it as a safer default.
+The key insight: we're not letting the polynomial explode at the edges. We lock it down to linear behavior outside the training range.
 :::
 
 
 ---
 
-## GAMs: generalized additive models (conceptual)
+## Natural splines in finance (and in R)
 
-- Model is a sum of smooth functions:
-- $$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + \varepsilon$$
-- Interpretable: you can plot each smooth effect
-- Still needs tuning (smoothness)
+**Why this matters: extrapolation**
+
+- In our stress-testing context: natural splines won't explode at extreme spreads
+- Trade-off: less flexibility at boundaries, but stable extrapolation behavior
+
+**In R:**
+
+- `splines::ns(x, df = ...)` (same API as `bs()`, but with boundary constraints)
 
 ::: notes
-Keep it minimal. GAM is a ‘nice-to-know’ tool that keeps interpretability.
-Useful in credit risk when relationships are nonlinear but you still need explainability.
+This ties back to our extrapolation discussion. Natural splines are a practical fix for the extrapolation problem. For most applications, mention `ns()` as the safer default for many applications.
+:::
+
+
+---
+
+## GAMs: generalized additive models (conceptual) {.smaller}
+
+**Idea: sum of smooth functions (one per predictor)**
+
+$$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + f_p(x_p) + \varepsilon$$
+
+- Each $f_j$ is a smooth (spline, kernel, etc.); fitted automatically
+- Interpretable: plot each smooth effect independently (not coefficients, but *functions*)
+- Great for credit risk: nonlinear relationships but you still need to explain them to regulators
+
+**How it differs from polynomial/spline regression:**
+
+- You fit separate smooths for each predictor (not a global polynomial)
+- Captures interactions *implicitly* (each smooth can adapt to regions)
+- Needs tuning: smoothness (or degrees of freedom) per predictor
+
+**In R:** `mgcv::gam(y ~ s(x1) + s(x2), family=binomial(link='logit'))`
+
+::: notes
+GAM is a 'nice-to-know' tool that keeps interpretability when multiple predictors are nonlinear. For this course, optional—include it if you have time. Stress: each smooth is independent, so you can interpret the effect of each variable separately.
 :::
 
 
@@ -254,15 +332,23 @@ Emphasize plotting partial effects.
 
 ---
 
-## Knots (conceptual) — where flexibility lives
+## Knots (conceptual) — where flexibility lives {.smaller}
 
 - Knots are locations where the piecewise polynomials join
-- More knots ⇒ more local flexibility
-- Using `df = ...` is often easier than picking knots by hand
+- More knots ⇒ more local flexibility (better fit in some regions)
+
+**Two ways to control knots:**
+
+- **By hand**: specify exact locations: `bs(x, knots=c(25, 50, 75))` → you must decide where
+- **By degrees of freedom**: let R space them for you: `bs(x, df=5)` → R picks knot placement
+
+**Why use `df`?**
+
+- Simpler: "How much flexibility?" vs. "Where should knots be?"
+- CV tunes the flexibility level; R handles knot placement automatically
 
 ::: notes
-Keep it conceptual. If asked: knots can be quantiles of x.
-But we’ll tune df with CV.
+Keep it conceptual. If asked: knots are usually placed at quantiles of x. The key insight: df is the tuning knob, not knot placement. We tune df with CV.
 :::
 
 
@@ -372,9 +458,9 @@ This is the main grading integrity point too.
 
 ## Deliverables (typical pattern)
 
-- 1) A reproducible R script / notebook that trains + validates
-- 2) A short write-up: what you tried and why
-- 3) A submission file with IDs + predicted probabilities (if required)
+1. A reproducible R script / notebook that trains + validates
+2. A short write-up: what you tried and why
+3. A submission file with IDs + predicted probabilities (if required)
 
 ::: notes
 Adjust to your actual repo structure.
@@ -489,10 +575,10 @@ Even if code differs, those are the anchor points.
 
 ## Suggested workflow for the next week
 
-- 1) Run baseline end-to-end
-- 2) Add one improvement lever at a time
-- 3) Compare using the same CV folds
-- 4) Freeze your final model; score test once; submit
+1. Run baseline end-to-end
+2. Add one improvement lever at a time
+3. Compare using the same CV folds
+4. Freeze your final model; score test once; submit
 
 ::: notes
 Tell them: do not chase tiny differences. Prefer stable gains.

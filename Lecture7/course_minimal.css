@@ -55,3 +55,11 @@
 
 .slide-smaller { font-size: 0.9em; }
 .slide-tiny    { font-size: 0.8em; }
+
+/* Fix {.smaller} slide to keep title at normal size */
+.reveal .smaller h1,
+.reveal .smaller h2 { 
+  font-size: 1.35em !important;  /* restore normal h2 size */
+}
+
+.reveal .smaller { font-size: 0.85em; }  /* scale body content */

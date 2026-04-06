@@ -190,14 +190,10 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 </section>
 <section id="two-strategies-for-nonlinearity" class="slide level2">
 <h2>Two strategies for nonlinearity</h2>
-<ul>
-<li><ol type="1">
-<li>engineer nonlinear features (polynomials, transforms, interactions)</li>
-</ol></li>
-<li><ol start="2" type="1">
-<li>use models that learn smooth nonlinear functions (splines, GAMs)</li>
-</ol></li>
-</ul>
+<ol type="1">
+<li>Engineer nonlinear features (polynomials, transforms, interactions)</li>
+<li>Use models that learn smooth nonlinear functions (splines, GAMs)</li>
+</ol>
 <aside class="notes">
 <p>We’ll do both, but keep the implementation light.</p>
 <style type="text/css">
@@ -239,8 +235,14 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <li>Example: <code>lm(y ~ poly(x, degree = 3, raw = TRUE), data = df)</code></li>
 <li>Or explicitly: <code>lm(y ~ x + I(x^2) + I(x^3), data=df)</code></li>
 </ul>
+<p><strong>Why <code>I()</code> around <code>x^2</code>, <code>x^3</code>?</strong></p>
+<ul>
+<li>In R formulas, <code>^</code> means “interaction/nesting”, not exponentiation</li>
+<li><code>I()</code> (“AsIs”) forces the expression to be evaluated literally: <code>x^2</code> becomes <span class="math inline">\(x^2\)</span>, not interaction</li>
+<li>Without <code>I()</code>: formula would try to fit <code>x * x</code> (interaction), not <code>x</code> squared</li>
+</ul>
 <aside class="notes">
-<p>Don’t dwell on syntax. The demo script will show it live. Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret.</p>
+<p>Don’t dwell on syntax. The demo script will show it live. Mention raw=TRUE vs orthogonal polynomials; raw is easier to interpret. The key: students often forget <code>I()</code> and get confused. Highlight it once, then move on.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -284,13 +286,55 @@ Pick degree with lowest error</code></pre>
 </section>
 <section id="polynomials-can-behave-badly-at-the-edges" class="slide level2">
 <h2>Polynomials can behave badly at the edges</h2>
+<p><strong>Interpolation vs.&nbsp;extrapolation:</strong></p>
 <ul>
-<li>They can explode outside the data range</li>
-<li>They can create unrealistic oscillations near boundaries</li>
-<li>Splines are a more stable alternative</li>
+<li>High-degree polynomials fit beautifully <em>within</em> the domain of your training data</li>
+<li>But <em>outside</em> that domain, they can explode or oscillate wildly</li>
+<li>This is a fundamental limitation: you’re fitting a function with no anchor beyond the edges</li>
 </ul>
 <aside class="notes">
-<p>This is a nice conceptual reason to introduce splines.</p>
+<p>You fit a 7th-degree polynomial to data from <span class="math inline">\(x \in [0, 100]\)</span>. What does it do at <span class="math inline">\(x = 200\)</span> or <span class="math inline">\(x = -50\)</span>? Usually: nonsense.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="why-extrapolation-matters-in-finance" class="slide level2">
+<h2>Why extrapolation matters in finance</h2>
+<p><strong>Stress testing &amp; scenario analysis:</strong></p>
+<ul>
+<li>Your training data covers a range of market conditions (e.g., credit spreads 50–200 bps)</li>
+<li>But stress testing, scenario analysis, and regulatory models often <em>extrapolate</em>: “What if spreads hit 500 bps?”</li>
+<li>A high-degree polynomial trained on historical data can give you nonsense in stressed scenarios</li>
+<li>This is a <em>feature risk</em>: your model works great on familiar terrain, but fails when the market moves into new territory</li>
+</ul>
+<aside class="notes">
+<p>Rate hikes, recession scenarios, tail-risk VaR—these are extrapolation problems. The model has never seen this regime, so you need something more stable than a high-degree polynomial.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-fix-splines-or-domain-constraints" class="slide level2">
+<h2>The fix: splines or domain constraints</h2>
+<p><strong>Splines (next):</strong> piecewise low-degree polynomials have stable extrapolation behavior</p>
+<p><strong>Or domain knowledge:</strong> explicit bounds, simpler functional form for tails, regularization toward economic intuition</p>
+<aside class="notes">
+<p>Both approaches acknowledge: don’t let the data fit whatever shape it wants outside the training domain. Constrain the model to behave sensibly when extrapolating.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -324,15 +368,23 @@ Pick degree with lowest error</code></pre>
           display:block!important;
       }</style></aside>
 </section>
-<section id="basis-functions-how-splines-fit-in-linear-regression" class="slide level2">
+<section id="basis-functions-how-splines-fit-in-linear-regression" class="slide level2 smaller">
 <h2>Basis functions: how splines fit in linear regression</h2>
+<p><strong>The trick: convert nonlinearity into a linear problem</strong></p>
+<p><span class="math display">\[y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon\]</span></p>
 <ul>
-<li>Even with splines, we’re still fitting a linear model:</li>
-<li><span class="math display">\[y = \beta_0 + \beta_1 b_1(x) + \cdots + \beta_m b_m(x) + \varepsilon\]</span></li>
-<li>Nonlinearity comes from the basis functions <span class="math inline">\(b_j(x)\)</span></li>
+<li><span class="math inline">\(b_j(x)\)</span> are <em>basis functions</em>: pre-computed transformations of <span class="math inline">\(x\)</span></li>
+<li>For splines: each basis function is a “bump” or polynomial piece</li>
+<li>We fit <em>linear</em> coefficients <span class="math inline">\(\beta_j\)</span> to these transformations</li>
+<li>Nonlinearity comes from the basis functions, not the fitting algorithm</li>
+</ul>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li>We can reuse everything: <code>lm()</code>, <code>glm()</code>, <code>coef()</code>, prediction intervals, inference</li>
+<li>We just pre-process <span class="math inline">\(x\)</span> first</li>
 </ul>
 <aside class="notes">
-<p>This is the key mental model. It also explains why we can keep using lm/glm workflows.</p>
+<p>This is the key mental model. It explains why splines aren’t a completely new tool—they’re basis feature engineering + linear regression. You can use all your existing workflow.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -365,15 +417,16 @@ Pick degree with lowest error</code></pre>
           display:block!important;
       }</style></aside>
 </section>
-<section id="natural-splines-conceptual" class="slide level2">
-<h2>Natural splines (conceptual)</h2>
+<section id="natural-splines-whats-different" class="slide level2">
+<h2>Natural splines: what’s different?</h2>
+<p><strong>Regular splines (B-splines) vs.&nbsp;natural splines</strong></p>
 <ul>
-<li>Natural splines constrain behavior at the boundaries</li>
-<li>Often more stable for extrapolation</li>
-<li>In R: <code>splines::ns(x, df = ...)</code></li>
+<li>Regular splines are flexible but can behave oddly at the boundaries</li>
+<li><em>Natural</em> splines add boundary constraints: force the function to be <em>linear</em> beyond the boundaries</li>
+<li>This means: outside your training domain, it extrapolates linearly (stable, sensible)</li>
 </ul>
 <aside class="notes">
-<p>We may or may not demo ns, but mention it as a safer default.</p>
+<p>The key insight: we’re not letting the polynomial explode at the edges. We lock it down to linear behavior outside the training range.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -386,16 +439,49 @@ Pick degree with lowest error</code></pre>
           display:block!important;
       }</style></aside>
 </section>
-<section id="gams-generalized-additive-models-conceptual" class="slide level2">
-<h2>GAMs: generalized additive models (conceptual)</h2>
+<section id="natural-splines-in-finance-and-in-r" class="slide level2">
+<h2>Natural splines in finance (and in R)</h2>
+<p><strong>Why this matters: extrapolation</strong></p>
 <ul>
-<li>Model is a sum of smooth functions:</li>
-<li><span class="math display">\[y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + \varepsilon\]</span></li>
-<li>Interpretable: you can plot each smooth effect</li>
-<li>Still needs tuning (smoothness)</li>
+<li>In our stress-testing context: natural splines won’t explode at extreme spreads</li>
+<li>Trade-off: less flexibility at boundaries, but stable extrapolation behavior</li>
+</ul>
+<p><strong>In R:</strong></p>
+<ul>
+<li><code>splines::ns(x, df = ...)</code> (same API as <code>bs()</code>, but with boundary constraints)</li>
 </ul>
 <aside class="notes">
-<p>Keep it minimal. GAM is a ‘nice-to-know’ tool that keeps interpretability. Useful in credit risk when relationships are nonlinear but you still need explainability.</p>
+<p>This ties back to our extrapolation discussion. Natural splines are a practical fix for the extrapolation problem. For most applications, mention <code>ns()</code> as the safer default for many applications.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="gams-generalized-additive-models-conceptual" class="slide level2 smaller">
+<h2>GAMs: generalized additive models (conceptual)</h2>
+<p><strong>Idea: sum of smooth functions (one per predictor)</strong></p>
+<p><span class="math display">\[y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + f_p(x_p) + \varepsilon\]</span></p>
+<ul>
+<li>Each <span class="math inline">\(f_j\)</span> is a smooth (spline, kernel, etc.); fitted automatically</li>
+<li>Interpretable: plot each smooth effect independently (not coefficients, but <em>functions</em>)</li>
+<li>Great for credit risk: nonlinear relationships but you still need to explain them to regulators</li>
+</ul>
+<p><strong>How it differs from polynomial/spline regression:</strong></p>
+<ul>
+<li>You fit separate smooths for each predictor (not a global polynomial)</li>
+<li>Captures interactions <em>implicitly</em> (each smooth can adapt to regions)</li>
+<li>Needs tuning: smoothness (or degrees of freedom) per predictor</li>
+</ul>
+<p><strong>In R:</strong> <code>mgcv::gam(y ~ s(x1) + s(x2), family=binomial(link='logit'))</code></p>
+<aside class="notes">
+<p>GAM is a ‘nice-to-know’ tool that keeps interpretability when multiple predictors are nonlinear. For this course, optional—include it if you have time. Stress: each smooth is independent, so you can interpret the effect of each variable separately.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -472,15 +558,24 @@ Pick degree with lowest error</code></pre>
           display:block!important;
       }</style></aside>
 </section>
-<section id="knots-conceptual-where-flexibility-lives" class="slide level2">
+<section id="knots-conceptual-where-flexibility-lives" class="slide level2 smaller">
 <h2>Knots (conceptual) — where flexibility lives</h2>
 <ul>
 <li>Knots are locations where the piecewise polynomials join</li>
-<li>More knots ⇒ more local flexibility</li>
-<li>Using <code>df = ...</code> is often easier than picking knots by hand</li>
+<li>More knots ⇒ more local flexibility (better fit in some regions)</li>
+</ul>
+<p><strong>Two ways to control knots:</strong></p>
+<ul>
+<li><strong>By hand</strong>: specify exact locations: <code>bs(x, knots=c(25, 50, 75))</code> → you must decide where</li>
+<li><strong>By degrees of freedom</strong>: let R space them for you: <code>bs(x, df=5)</code> → R picks knot placement</li>
+</ul>
+<p><strong>Why use <code>df</code>?</strong></p>
+<ul>
+<li>Simpler: “How much flexibility?” vs.&nbsp;“Where should knots be?”</li>
+<li>CV tunes the flexibility level; R handles knot placement automatically</li>
 </ul>
 <aside class="notes">
-<p>Keep it conceptual. If asked: knots can be quantiles of x. But we’ll tune df with CV.</p>
+<p>Keep it conceptual. If asked: knots are usually placed at quantiles of x. The key insight: df is the tuning knob, not knot placement. We tune df with CV.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -648,17 +743,11 @@ Pick degree with lowest error</code></pre>
 </section>
 <section id="deliverables-typical-pattern" class="slide level2">
 <h2>Deliverables (typical pattern)</h2>
-<ul>
-<li><ol type="1">
+<ol type="1">
 <li>A reproducible R script / notebook that trains + validates</li>
-</ol></li>
-<li><ol start="2" type="1">
 <li>A short write-up: what you tried and why</li>
-</ol></li>
-<li><ol start="3" type="1">
 <li>A submission file with IDs + predicted probabilities (if required)</li>
-</ol></li>
-</ul>
+</ol>
 <aside class="notes">
 <p>Adjust to your actual repo structure. Even if the exact deliverables differ, this pattern fits most projects.</p>
 <style type="text/css">
@@ -826,20 +915,12 @@ Pick degree with lowest error</code></pre>
 </section>
 <section id="suggested-workflow-for-the-next-week" class="slide level2">
 <h2>Suggested workflow for the next week</h2>
-<ul>
-<li><ol type="1">
+<ol type="1">
 <li>Run baseline end-to-end</li>
-</ol></li>
-<li><ol start="2" type="1">
 <li>Add one improvement lever at a time</li>
-</ol></li>
-<li><ol start="3" type="1">
 <li>Compare using the same CV folds</li>
-</ol></li>
-<li><ol start="4" type="1">
 <li>Freeze your final model; score test once; submit</li>
-</ol></li>
-</ul>
+</ol>
 <aside class="notes">
 <p>Tell them: do not chase tiny differences. Prefer stable gains. Use 1-SE style conservatism if they’re unsure.</p>
 <style type="text/css">
