@@ -1,8 +1,8 @@
 ---
 title: "Lecture 7 (Part 1): Model Selection & Regularization (ISLR Ch. 6)"
 subtitle: "Selecting predictors and tuning regularization with cross-validation"
-author: "FNCE 5352 — Financial Programming & Modeling (R Weeks 1–7)"
-date: "Spring 2026"
+author: "FNCE 5352 — Financial Programming & Modeling"
+date: "April 7, 2026"
 format:
   revealjs:
     theme: white
@@ -232,15 +232,39 @@ In practice, people often shortcut and still get usable results—note the trade
 
 ---
 
-## Warning: selection can leak
+## ⚠️ Warning: selection can leak
 
-- If you pick predictors using the full dataset, then CV the chosen model:
-- you’re leaking information across folds
-- CV error will look better than it truly is
+:::: {.columns}
+::: {.column width="48%"}
+**❌ Leaky pipeline**
+
+1. Run variable selection on the **full dataset**
+2. Pick the “best” predictors
+3. *Then* cross-validate the chosen model
+:::
+::: {.column width="48%"}
+**✅ Clean pipeline**
+
+For **each fold**:
+
+1. Select predictors on training fold only
+2. Fit model on training fold
+3. Evaluate on held-out fold
+:::
+::::
+
+> CV error from the leaky pipeline is **optimistically biased** — your model looks better than it truly is.
 
 ::: notes
-This mirrors scaling/leakage with KNN.
-Same principle: anything “learned” must be learned inside each training fold.
+This is one of the most common and costly mistakes in applied modeling — easy to do accidentally, hard to notice.
+
+**Concrete example:** Suppose you have 200 candidate predictors and 1,000 observations. You compute correlations between each predictor and the outcome using all 1,000 rows, keep the top 20, then run 10-fold CV on those 20 predictors. This is wrong. When fold 1 is held out as your test set, the feature selection step already “saw” fold 1’s data — it wasn’t truly withheld. The CV error will be overly optimistic because the predictors were cherry-picked using information from every fold, including the one you’re pretending is unseen.
+
+**The rule:** anything that “learns” from data — scaling, imputation, feature selection, dimensionality reduction — must be re-done inside each training fold only. It must never touch the held-out fold before evaluation.
+
+**Finance angle:** this is the statistical cousin of look-ahead bias and backtest overfitting. A strategy that “selects” signals using the full historical window before backtesting will always look better than it performs live.
+
+**In practice with tidymodels:** putting all preprocessing steps inside a `recipe()` and evaluating inside a `workflow()` with `fit_resamples()` handles this correctly by design — the recipe is re-fit on each training fold.
 :::
 
 
@@ -293,19 +317,23 @@ PASTE SCREENSHOT HERE — ISLR2e Ch. 2 bias–variance / test error vs flexibili
 **Optimization problem:**
 $$\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2$$
 
-## Intuition: the budget metaphor**
+## Intuition: the budget metaphor
 
-- Think of $\lambda$ as a "budget" for coefficient spending
-- Each unit of $|\beta_j|$ costs you: the squared amount goes against your budget
-- Ridge penalizes *large* coefficients: $\beta_j = 0.1$ costs $0.01$; $\beta_j = 1.0$ costs $1.00$
-- So ridge "spreads" the weight around: better to use many small coefficients than a few huge ones
-- When $\lambda \uparrow$ (budget shrinks): all coefficients shrink toward 0 (usually not exactly 0)
+Think of $\lambda$ as controlling how *tight* the budget is for your coefficients.
+
+| $\beta_j$ | Penalty cost ($\beta_j^2$) |
+|:---:|:---:|
+| 0.1 | 0.01 |
+| 1.0 | 1.00 |
+| 2.0 | 4.00 |
+
+- A coefficient **10× larger** costs **100× more** → ridge heavily penalizes large values
+- Better to spread weight across many small $\beta_j$s than concentrate in a few big ones
+- As $\lambda \uparrow$: budget tightens, all coefficients shrink toward 0 (but rarely exactly 0)
 
 ::: notes
-Use finance framing: "We have a limited budget to allocate among predictors. 
-Ridge says: use many predictors a little bit rather than a few predictors a lot."
-This is why ridge keeps all predictors but dampens them.
-Mention: we standardize because we don't want units to affect the budget!
+Finance framing: limited budget to allocate across predictors — ridge says spread it thin.
+Standardize predictors first; otherwise units distort the budget (a coefficient on income in dollars vs. thousands gets penalized very differently).
 :::
 
 
@@ -453,13 +481,22 @@ Focus on the output (CV curve). Students don't need to understand the loop; they
 
 ## Choosing $\lambda$: min vs 1-SE
 
-- $\lambda_{min}$: best mean CV performance
-- $\lambda_{1se}$: more regularization, often simpler + more stable
-- In governance-heavy settings, $\lambda_{1se}$ is a defensible default
+The CV curve gives you error **and uncertainty** at each $\lambda$. Two common choices:
+
+| | $\lambda_{min}$ | $\lambda_{1se}$ |
+|---|---|---|
+| **Rule** | Lowest mean CV error | Largest $\lambda$ within 1 SE of the min |
+| **Model** | Best average fit | Simplest model not significantly worse |
+| **Risk** | May overfit the CV noise | Slightly higher error, more stable |
+
+**Intuition:** The CV error curve is noisy. $\lambda_{1se}$ asks: *"is there a simpler model whose error is statistically indistinguishable from the best?"* If yes, prefer it.
 
 ::: notes
-This is a real-world model risk comment.
-You can trade a tiny bit of performance for stability and interpretability.
+Walk through the logic: CV gives you a mean error and a standard error at each lambda. lambda_min picks the bottom of the curve. lambda_1se slides right along the curve until the error rises by one standard error — that model is "not significantly worse" but uses more regularization (fewer/smaller coefficients).
+
+Why prefer lambda_1se in practice? The bottom of a CV curve is noisy — you might just be overfitting the folds. lambda_1se is a conservative hedge. In finance/model governance contexts, a simpler model is also easier to defend: "we deliberately chose a more parsimonious model that performed within noise of the best."
+
+In glmnet: both are returned automatically — `lambda.min` and `lambda.1se`. Students just need to know which to pass to `predict()`.
 :::
 
 
@@ -522,6 +559,8 @@ Anchor this before the break.
 When we move to Part 2, remind them: we're doing the same thing with different "knobs."
 :::
 
+
+<!--
 ---
 
 ## PASTE SCREENSHOT HERE — ISLR Figure suggestions
@@ -537,3 +576,4 @@ These are great visual anchors. Screenshot them into the deck if you want.
 If you skip screenshots, the demo script plots give the same intuition.
 :::
 
+-->

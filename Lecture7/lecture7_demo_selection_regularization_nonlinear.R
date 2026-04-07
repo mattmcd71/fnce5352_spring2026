@@ -26,6 +26,7 @@ suppressPackageStartupMessages({
   library(splines)
   # library(mgcv) # optional
   library(ISLR2)  # for Hitters, Default
+  library(tidyverse)
 })
 
 set.seed(5352)
@@ -144,6 +145,33 @@ plot(cv_ridge)
 # The vertical lines show lambda.min (best CV) and lambda.1se (1 SE rule: more conservative)
 cv_ridge$lambda.min
 cv_ridge$lambda.1se
+
+#plot the coefficients
+coef_df <- bind_rows(
+  tibble(
+    term   = rownames(coef(cv_ridge, s = "lambda.min"))[-1],
+    value  = as.numeric(coef(cv_ridge, s = "lambda.min"))[-1],
+    lambda = "lambda.min (26)"
+  ),
+  tibble(
+    term   = rownames(coef(cv_ridge, s = "lambda.1se"))[-1],
+    value  = as.numeric(coef(cv_ridge, s = "lambda.1se"))[-1],
+    lambda = "lambda.1se (2437)"
+  )
+)
+
+ggplot(coef_df, aes(x = reorder(term, abs(value)), y = value, fill = lambda)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  scale_fill_manual(values = c("lambda.min (26)" = "#378ADD", "lambda.1se (2437)" = "#D85A30")) +
+  labs(
+    title = "Ridge coefficients: lambda.min vs lambda.1se",
+    x     = NULL,
+    y     = "Coefficient value",
+    fill  = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top")
 
 # Lasso: alpha = 1 (L1 penalty: sum of absolute coefficients)
 # Lasso tends to set some coefficients exactly to 0 (automatic variable selection)

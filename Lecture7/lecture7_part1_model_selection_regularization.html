@@ -9,8 +9,8 @@
 <link href="lecture7_part1_model_selection_regularization_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.8.26">
 
-  <meta name="author" content="FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)">
-  <meta name="dcterms.date" content="2026-01-01">
+  <meta name="author" content="FNCE 5352 — Financial Programming &amp; Modeling">
+  <meta name="dcterms.date" content="2026-04-07">
   <title>Lecture 7 (Part 1): Model Selection &amp; Regularization (ISLR Ch. 6)</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -135,12 +135,12 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7) 
+FNCE 5352 — Financial Programming &amp; Modeling 
 </div>
 </div>
 </div>
 
-  <p class="date">2026-01-01</p>
+  <p class="date">2026-04-07</p>
 </section>
 <section id="tonights-plan-lecture-7" class="slide level2">
 <h2>Tonight’s plan (Lecture 7)</h2>
@@ -444,14 +444,33 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
       }</style></aside>
 </section>
 <section id="warning-selection-can-leak" class="slide level2">
-<h2>Warning: selection can leak</h2>
-<ul>
-<li>If you pick predictors using the full dataset, then CV the chosen model:</li>
-<li>you’re leaking information across folds</li>
-<li>CV error will look better than it truly is</li>
-</ul>
+<h2>⚠️ Warning: selection can leak</h2>
+<div class="columns">
+<div class="column" style="width:48%;">
+<p><strong>❌ Leaky pipeline</strong></p>
+<ol type="1">
+<li>Run variable selection on the <strong>full dataset</strong></li>
+<li>Pick the “best” predictors</li>
+<li><em>Then</em> cross-validate the chosen model</li>
+</ol>
+</div><div class="column" style="width:48%;">
+<p><strong>✅ Clean pipeline</strong></p>
+<p>For <strong>each fold</strong>:</p>
+<ol type="1">
+<li>Select predictors on training fold only</li>
+<li>Fit model on training fold</li>
+<li>Evaluate on held-out fold</li>
+</ol>
+</div></div>
+<blockquote>
+<p>CV error from the leaky pipeline is <strong>optimistically biased</strong> — your model looks better than it truly is.</p>
+</blockquote>
 <aside class="notes">
-<p>This mirrors scaling/leakage with KNN. Same principle: anything “learned” must be learned inside each training fold.</p>
+<p>This is one of the most common and costly mistakes in applied modeling — easy to do accidentally, hard to notice.</p>
+<p><strong>Concrete example:</strong> Suppose you have 200 candidate predictors and 1,000 observations. You compute correlations between each predictor and the outcome using all 1,000 rows, keep the top 20, then run 10-fold CV on those 20 predictors. This is wrong. When fold 1 is held out as your test set, the feature selection step already “saw” fold 1’s data — it wasn’t truly withheld. The CV error will be overly optimistic because the predictors were cherry-picked using information from every fold, including the one you’re pretending is unseen.</p>
+<p><strong>The rule:</strong> anything that “learns” from data — scaling, imputation, feature selection, dimensionality reduction — must be re-done inside each training fold only. It must never touch the held-out fold before evaluation.</p>
+<p><strong>Finance angle:</strong> this is the statistical cousin of look-ahead bias and backtest overfitting. A strategy that “selects” signals using the full historical window before backtesting will always look better than it performs live.</p>
+<p><strong>In practice with tidymodels:</strong> putting all preprocessing steps inside a <code>recipe()</code> and evaluating inside a <code>workflow()</code> with <code>fit_resamples()</code> handles this correctly by design — the recipe is re-fit on each training fold.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -532,16 +551,37 @@ FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)
 <p><strong>Optimization problem:</strong> <span class="math display">\[\text{minimize} \quad \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2\]</span></p>
 </section>
 <section id="intuition-the-budget-metaphor" class="slide level2">
-<h2>Intuition: the budget metaphor**</h2>
+<h2>Intuition: the budget metaphor</h2>
+<p>Think of <span class="math inline">\(\lambda\)</span> as controlling how <em>tight</em> the budget is for your coefficients.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: center;"><span class="math inline">\(\beta_j\)</span></th>
+<th style="text-align: center;">Penalty cost (<span class="math inline">\(\beta_j^2\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0.1</td>
+<td style="text-align: center;">0.01</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">1.0</td>
+<td style="text-align: center;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">2.0</td>
+<td style="text-align: center;">4.00</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li>Think of <span class="math inline">\(\lambda\)</span> as a “budget” for coefficient spending</li>
-<li>Each unit of <span class="math inline">\(|\beta_j|\)</span> costs you: the squared amount goes against your budget</li>
-<li>Ridge penalizes <em>large</em> coefficients: <span class="math inline">\(\beta_j = 0.1\)</span> costs <span class="math inline">\(0.01\)</span>; <span class="math inline">\(\beta_j = 1.0\)</span> costs <span class="math inline">\(1.00\)</span></li>
-<li>So ridge “spreads” the weight around: better to use many small coefficients than a few huge ones</li>
-<li>When <span class="math inline">\(\lambda \uparrow\)</span> (budget shrinks): all coefficients shrink toward 0 (usually not exactly 0)</li>
+<li>A coefficient <strong>10× larger</strong> costs <strong>100× more</strong> → ridge heavily penalizes large values</li>
+<li>Better to spread weight across many small <span class="math inline">\(\beta_j\)</span>s than concentrate in a few big ones</li>
+<li>As <span class="math inline">\(\lambda \uparrow\)</span>: budget tightens, all coefficients shrink toward 0 (but rarely exactly 0)</li>
 </ul>
 <aside class="notes">
-<p>Use finance framing: “We have a limited budget to allocate among predictors. Ridge says: use many predictors a little bit rather than a few predictors a lot.” This is why ridge keeps all predictors but dampens them. Mention: we standardize because we don’t want units to affect the budget!</p>
+<p>Finance framing: limited budget to allocate across predictors — ridge says spread it thin. Standardize predictors first; otherwise units distort the budget (a coefficient on income in dollars vs.&nbsp;thousands gets penalized very differently).</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -747,13 +787,43 @@ Pick lambda with lowest average error (or 1-SE rule)</code></pre>
 </section>
 <section id="choosing-lambda-min-vs-1-se" class="slide level2">
 <h2>Choosing <span class="math inline">\(\lambda\)</span>: min vs 1-SE</h2>
-<ul>
-<li><span class="math inline">\(\lambda_{min}\)</span>: best mean CV performance</li>
-<li><span class="math inline">\(\lambda_{1se}\)</span>: more regularization, often simpler + more stable</li>
-<li>In governance-heavy settings, <span class="math inline">\(\lambda_{1se}\)</span> is a defensible default</li>
-</ul>
+<p>The CV curve gives you error <strong>and uncertainty</strong> at each <span class="math inline">\(\lambda\)</span>. Two common choices:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><span class="math inline">\(\lambda_{min}\)</span></th>
+<th><span class="math inline">\(\lambda_{1se}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Rule</strong></td>
+<td>Lowest mean CV error</td>
+<td>Largest <span class="math inline">\(\lambda\)</span> within 1 SE of the min</td>
+</tr>
+<tr class="even">
+<td><strong>Model</strong></td>
+<td>Best average fit</td>
+<td>Simplest model not significantly worse</td>
+</tr>
+<tr class="odd">
+<td><strong>Risk</strong></td>
+<td>May overfit the CV noise</td>
+<td>Slightly higher error, more stable</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Intuition:</strong> The CV error curve is noisy. <span class="math inline">\(\lambda_{1se}\)</span> asks: <em>“is there a simpler model whose error is statistically indistinguishable from the best?”</em> If yes, prefer it.</p>
 <aside class="notes">
-<p>This is a real-world model risk comment. You can trade a tiny bit of performance for stability and interpretability.</p>
+<p>Walk through the logic: CV gives you a mean error and a standard error at each lambda. lambda_min picks the bottom of the curve. lambda_1se slides right along the curve until the error rises by one standard error — that model is “not significantly worse” but uses more regularization (fewer/smaller coefficients).</p>
+<p>Why prefer lambda_1se in practice? The bottom of a CV curve is noisy — you might just be overfitting the folds. lambda_1se is a conservative hedge. In finance/model governance contexts, a simpler model is also easier to defend: “we deliberately chose a more parsimonious model that performed within noise of the best.”</p>
+<p>In glmnet: both are returned automatically — <code>lambda.min</code> and <code>lambda.1se</code>. Students just need to know which to pass to <code>predict()</code>.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -858,28 +928,23 @@ Pick lambda with lowest average error (or 1-SE rule)</code></pre>
           overflow: hidden!important;
           display:block!important;
       }</style></aside>
-</section>
-<section id="paste-screenshot-here-islr-figure-suggestions" class="slide level2">
-<h2>PASTE SCREENSHOT HERE — ISLR Figure suggestions</h2>
-<ul>
-<li>Ch. 6.6: illustration of ridge vs lasso shrinkage paths (compare L2 vs L1 geometry)</li>
-<li>Ch. 6.6.2: CV curve vs <span class="math inline">\(\log(\lambda)\)</span> for ridge/lasso (show min vs 1-SE)</li>
-<li>Ch. 6.2: stepwise selection algorithm and overview</li>
-</ul>
-<p><em>(Add page numbers once you have your copy open.)</em></p>
-<aside class="notes">
-<p>These are great visual anchors. Screenshot them into the deck if you want. If you skip screenshots, the demo script plots give the same intuition.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
+<!--
+---
+
+## PASTE SCREENSHOT HERE — ISLR Figure suggestions
+
+- Ch. 6.6: illustration of ridge vs lasso shrinkage paths (compare L2 vs L1 geometry)
+- Ch. 6.6.2: CV curve vs $\log(\lambda)$ for ridge/lasso (show min vs 1-SE)
+- Ch. 6.2: stepwise selection algorithm and overview
+
+*(Add page numbers once you have your copy open.)*
+
+::: notes
+These are great visual anchors. Screenshot them into the deck if you want.
+If you skip screenshots, the demo script plots give the same intuition.
+:::
+
+-->
 
 </section>
     </div>

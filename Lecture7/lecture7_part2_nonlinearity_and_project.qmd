@@ -1,8 +1,8 @@
 ---
-title: "Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)"
-subtitle: "Polynomials, splines, and a project roadmap"
-author: "FNCE 5352 — Financial Programming & Modeling (R Weeks 1–7)"
-date: "Spring 2026"
+title: "Lecture 7 (Part 2): Beyond Linearity"
+subtitle: "Polynomials and splines"
+author: "FNCE 5352 — Financial Programming & Modeling"
+date: "April 7, 2026"
 format:
   revealjs:
     theme: white
@@ -425,9 +425,10 @@ Make it feel like a toolbox that aligns to the lecture content.
 :::
 
 
----
 
-## Credit scoring project: purpose
+# Credit scoring project
+
+<!---
 
 - You’ll build a model that predicts default risk
 - Goal: strong out-of-sample performance
@@ -616,3 +617,4 @@ Again: optional screenshots. The demo script will create similar plots.
 End here so you can transition directly into live walkthrough.
 :::
 
+-->

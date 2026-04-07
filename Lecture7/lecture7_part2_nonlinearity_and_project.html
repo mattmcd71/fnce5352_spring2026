@@ -9,9 +9,9 @@
 <link href="lecture7_part2_nonlinearity_and_project_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.8.26">
 
-  <meta name="author" content="FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7)">
-  <meta name="dcterms.date" content="2026-01-01">
-  <title>Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)</title>
+  <meta name="author" content="FNCE 5352 — Financial Programming &amp; Modeling">
+  <meta name="dcterms.date" content="2026-04-07">
+  <title>Lecture 7 (Part 2): Beyond Linearity</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -129,18 +129,18 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Lecture 7 (Part 2): Beyond Linearity + Credit Scoring Project (ISLR Ch. 7)</h1>
-  <p class="subtitle">Polynomials, splines, and a project roadmap</p>
+  <h1 class="title">Lecture 7 (Part 2): Beyond Linearity</h1>
+  <p class="subtitle">Polynomials and splines</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-FNCE 5352 — Financial Programming &amp; Modeling (R Weeks 1–7) 
+FNCE 5352 — Financial Programming &amp; Modeling 
 </div>
 </div>
 </div>
 
-  <p class="date">2026-01-01</p>
+  <p class="date">2026-04-07</p>
 </section>
 <section id="back-from-break-where-we-are" class="slide level2">
 <h2>Back from break: where we are</h2>
@@ -698,287 +698,198 @@ Pick degree with lowest error</code></pre>
           display:block!important;
       }</style></aside>
 </section>
-<section id="credit-scoring-project-purpose" class="slide level2">
-<h2>Credit scoring project: purpose</h2>
-<ul>
-<li>You’ll build a model that predicts default risk</li>
-<li>Goal: strong out-of-sample performance</li>
-<li>Constraints: avoid leakage; keep work reproducible</li>
-</ul>
-<aside class="notes">
-<p>Set expectations: this is realistic modeling work, not a math exercise.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="data-splits-roles-non-negotiable" class="slide level2">
-<h2>Data splits: roles (non-negotiable)</h2>
-<ul>
-<li><strong>Train:</strong> fit models and do CV/tuning</li>
-<li><strong>CV folds (inside Train):</strong> compare models + tune knobs</li>
-<li><strong>Test:</strong> final, once-only evaluation (no tuning)</li>
-<li><strong>Leakage example:</strong> if you pick features on full data, then CV it → test error looks too good</li>
-</ul>
-<aside class="notes">
-<p>Hammer it: never tune on the test set. Real-world example: “I looked at correlations in all rows, then CV’d the selected model. Big mistake—correlation overfit.” This is the main grading integrity point too.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="deliverables-typical-pattern" class="slide level2">
-<h2>Deliverables (typical pattern)</h2>
-<ol type="1">
-<li>A reproducible R script / notebook that trains + validates</li>
-<li>A short write-up: what you tried and why</li>
-<li>A submission file with IDs + predicted probabilities (if required)</li>
-</ol>
-<aside class="notes">
-<p>Adjust to your actual repo structure. Even if the exact deliverables differ, this pattern fits most projects.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="baseline-model-logistic-regression" class="slide level2">
-<h2>Baseline model: logistic regression</h2>
-<ul>
-<li>Start with a simple GLM (binomial logit)</li>
-<li>Pick a reasonable set of predictors</li>
-<li>Establish a baseline metric on CV + test</li>
-</ul>
-<aside class="notes">
-<p>The baseline is essential for learning. Without it, improvements are meaningless.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="metric-choice-tie-to-lecture-5" class="slide level2">
-<h2>Metric choice (tie to Lecture 5)</h2>
-<ul>
-<li>If costs are symmetric: AUC can be a good ranking metric</li>
-<li>If you will threshold decisions: consider cost-weighted error</li>
-<li>Always report something interpretable</li>
-</ul>
-<aside class="notes">
-<p>Remind them: AUC doesn’t pick a threshold. If the project has costs, align metric to costs.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="improvement-lever-1-regularization-ridgelasso" class="slide level2">
-<h2>Improvement lever 1: regularization (ridge/lasso)</h2>
-<ul>
-<li>Use <code>glmnet</code> with <code>family='binomial'</code></li>
-<li>Tune <span class="math inline">\(\lambda\)</span> via CV</li>
-<li>Compare <span class="math inline">\(\lambda_{min}\)</span> vs <span class="math inline">\(\lambda_{1se}\)</span></li>
-</ul>
-<aside class="notes">
-<p>Tell them this is often the biggest ‘easy win’. Especially with correlated predictors / many engineered features.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="improvement-lever-2-nonlinear-terms" class="slide level2">
-<h2>Improvement lever 2: nonlinear terms</h2>
-<ul>
-<li>Try polynomial terms (degree 2–3) for key variables one at a time</li>
-<li>Try spline bases (df = 3–6) for smoother, more local effects</li>
-<li>Tune degree / df with CV inside training set</li>
-<li>Finance use: balance vs default may be threshold-like; utilization may saturate</li>
-</ul>
-<aside class="notes">
-<p>Encourage one variable at a time so they can understand what changed. Avoid kitchen-sink feature explosion early. Use the CV curves from the demo to guide degree/df choices.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="improvement-lever-3-feature-engineering-ideas" class="slide level2">
-<h2>Improvement lever 3: feature engineering ideas</h2>
-<ul>
-<li>Missingness indicators (is.na flags)</li>
-<li>Transforms: log(1+x), winsorization ideas</li>
-<li>Interactions: e.g., income × utilization</li>
-<li>Scaling (when needed) done <em>inside</em> resampling</li>
-</ul>
-<aside class="notes">
-<p>Keep it “candidate list,” not a mandate. Tie to finance intuition: ratios, saturations, thresholds.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="project-hygiene-checklist" class="slide level2">
-<h2>Project hygiene checklist</h2>
-<ul>
-<li>Set a seed; save splits; avoid re-splitting every run</li>
-<li>Keep a clear train/CV/test separation</li>
-<li>Log experiments: what changed, what improved</li>
-<li>Sanity-check predictions (calibration-ish, extreme probs)</li>
-</ul>
-<aside class="notes">
-<p>This is the professional workflow. If they do nothing else, do these four things.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="starter-code-walkthrough-what-to-look-for" class="slide level2">
-<h2>Starter code walkthrough (what to look for)</h2>
-<ul>
-<li>Where the data live (folder path)</li>
-<li>Where you define your split + folds</li>
-<li>Where you compute metrics (yardstick allowed)</li>
-<li>Where you write predictions to CSV</li>
-</ul>
-<aside class="notes">
-<p>You can tailor this live to the repo they have. Even if code differs, those are the anchor points.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="suggested-workflow-for-the-next-week" class="slide level2">
-<h2>Suggested workflow for the next week</h2>
-<ol type="1">
-<li>Run baseline end-to-end</li>
-<li>Add one improvement lever at a time</li>
-<li>Compare using the same CV folds</li>
-<li>Freeze your final model; score test once; submit</li>
-</ol>
-<aside class="notes">
-<p>Tell them: do not chase tiny differences. Prefer stable gains. Use 1-SE style conservatism if they’re unsure.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="what-success-looks-like-end-to-end-project-summary" class="slide level2">
-<h2>What success looks like (end-to-end project summary)</h2>
-<ol type="1">
-<li><strong>Baseline:</strong> simple logistic GLM with standard predictors (establish benchmark)</li>
-<li><strong>Experiment:</strong> try regularization, nonlinear terms, feature engineering separately</li>
-<li><strong>Validate:</strong> report train/CV/test metrics consistently; show reproducible seed/splits</li>
-<li><strong>Document:</strong> brief write-up explaining what you tried and why it worked (or didn’t)</li>
-<li><strong>Submit:</strong> predictions on test set (or specified format) with clear reproducibility</li>
-</ol>
-<aside class="notes">
-<p>This is your rubric. Do all five and you’ve done the work right. The goal is not perfection on AUC—it’s showing you understand the workflow.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="paste-screenshot-here-islr-figure-suggestions" class="slide level2">
-<h2>PASTE SCREENSHOT HERE — ISLR Figure suggestions</h2>
-<ul>
-<li>Ch. 7: polynomial fit vs spline fit illustration</li>
-<li>Ch. 7: GAM component plots (if you want a visual)</li>
-<li>Ch. 7: CV for selecting flexibility (degree/df)</li>
-</ul>
-<p><em>(Add page numbers once you have your copy open.)</em></p>
-<aside class="notes">
-<p>Again: optional screenshots. The demo script will create similar plots. End here so you can transition directly into live walkthrough.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
+<section id="credit-scoring-project" class="title-slide slide level1 center">
+<h1>Credit scoring project</h1>
+<!---
+
+- You’ll build a model that predicts default risk
+- Goal: strong out-of-sample performance
+- Constraints: avoid leakage; keep work reproducible
+
+::: notes
+Set expectations: this is realistic modeling work, not a math exercise.
+:::
+
+
+---
+
+## Data splits: roles (non-negotiable)
+
+- **Train:** fit models and do CV/tuning
+- **CV folds (inside Train):** compare models + tune knobs
+- **Test:** final, once-only evaluation (no tuning)
+- **Leakage example:** if you pick features on full data, then CV it → test error looks too good
+
+::: notes
+Hammer it: never tune on the test set.
+Real-world example: "I looked at correlations in all rows, then CV'd the selected model. Big mistake—correlation overfit."
+This is the main grading integrity point too.
+:::
+
+
+---
+
+## Deliverables (typical pattern)
+
+1. A reproducible R script / notebook that trains + validates
+2. A short write-up: what you tried and why
+3. A submission file with IDs + predicted probabilities (if required)
+
+::: notes
+Adjust to your actual repo structure.
+Even if the exact deliverables differ, this pattern fits most projects.
+:::
+
+
+---
+
+## Baseline model: logistic regression
+
+- Start with a simple GLM (binomial logit)
+- Pick a reasonable set of predictors
+- Establish a baseline metric on CV + test
+
+::: notes
+The baseline is essential for learning.
+Without it, improvements are meaningless.
+:::
+
+
+---
+
+## Metric choice (tie to Lecture 5)
+
+- If costs are symmetric: AUC can be a good ranking metric
+- If you will threshold decisions: consider cost-weighted error
+- Always report something interpretable
+
+::: notes
+Remind them: AUC doesn’t pick a threshold.
+If the project has costs, align metric to costs.
+:::
+
+
+---
+
+## Improvement lever 1: regularization (ridge/lasso)
+
+- Use `glmnet` with `family='binomial'`
+- Tune $\lambda$ via CV
+- Compare $\lambda_{min}$ vs $\lambda_{1se}$
+
+::: notes
+Tell them this is often the biggest ‘easy win’.
+Especially with correlated predictors / many engineered features.
+:::
+
+
+---
+
+## Improvement lever 2: nonlinear terms
+
+- Try polynomial terms (degree 2–3) for key variables one at a time
+- Try spline bases (df = 3–6) for smoother, more local effects
+- Tune degree / df with CV inside training set
+- Finance use: balance vs default may be threshold-like; utilization may saturate
+
+::: notes
+Encourage one variable at a time so they can understand what changed.
+Avoid kitchen-sink feature explosion early.
+Use the CV curves from the demo to guide degree/df choices.
+:::
+
+
+---
+
+## Improvement lever 3: feature engineering ideas
+
+- Missingness indicators (is.na flags)
+- Transforms: log(1+x), winsorization ideas
+- Interactions: e.g., income × utilization
+- Scaling (when needed) done *inside* resampling
+
+::: notes
+Keep it “candidate list,” not a mandate.
+Tie to finance intuition: ratios, saturations, thresholds.
+:::
+
+
+---
+
+## Project hygiene checklist
+
+- Set a seed; save splits; avoid re-splitting every run
+- Keep a clear train/CV/test separation
+- Log experiments: what changed, what improved
+- Sanity-check predictions (calibration-ish, extreme probs)
+
+::: notes
+This is the professional workflow.
+If they do nothing else, do these four things.
+:::
+
+
+---
+
+## Starter code walkthrough (what to look for)
+
+- Where the data live (folder path)
+- Where you define your split + folds
+- Where you compute metrics (yardstick allowed)
+- Where you write predictions to CSV
+
+::: notes
+You can tailor this live to the repo they have.
+Even if code differs, those are the anchor points.
+:::
+
+
+---
+
+## Suggested workflow for the next week
+
+1. Run baseline end-to-end
+2. Add one improvement lever at a time
+3. Compare using the same CV folds
+4. Freeze your final model; score test once; submit
+
+::: notes
+Tell them: do not chase tiny differences. Prefer stable gains.
+Use 1-SE style conservatism if they’re unsure.
+:::
+
+
+---
+
+## What success looks like (end-to-end project summary)
+
+1. **Baseline:** simple logistic GLM with standard predictors (establish benchmark)
+2. **Experiment:** try regularization, nonlinear terms, feature engineering separately
+3. **Validate:** report train/CV/test metrics consistently; show reproducible seed/splits
+4. **Document:** brief write-up explaining what you tried and why it worked (or didn't)
+5. **Submit:** predictions on test set (or specified format) with clear reproducibility
+
+::: notes
+This is your rubric. Do all five and you've done the work right.
+The goal is not perfection on AUC—it's showing you understand the workflow.
+:::
+
+---
+
+## PASTE SCREENSHOT HERE — ISLR Figure suggestions
+
+- Ch. 7: polynomial fit vs spline fit illustration
+- Ch. 7: GAM component plots (if you want a visual)
+- Ch. 7: CV for selecting flexibility (degree/df)
+
+*(Add page numbers once you have your copy open.)*
+
+::: notes
+Again: optional screenshots. The demo script will create similar plots.
+End here so you can transition directly into live walkthrough.
+:::
+
+-->
 
 </section>
     </div>
