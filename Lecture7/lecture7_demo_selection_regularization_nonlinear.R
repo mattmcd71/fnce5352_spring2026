@@ -117,6 +117,7 @@ for (fold in fold_ids(folds_hit)) {
   }
 }
 
+
 mean_rmse_by_k <- rowMeans(cv_rmse, na.rm = TRUE)
 best_k <- which.min(mean_rmse_by_k)
 best_k
@@ -124,6 +125,10 @@ best_k
 plot(1:Kmax, mean_rmse_by_k, type = "b",
      xlab = "Model size (k predictors)",
      ylab = "10-fold CV RMSE")
+
+
+#which model has 10 variables in it?
+coef(regfit_fwd, id = 10)
 
 # ← FOCUS HERE: Look at the plot. Best k is the one with lowest CV error.
 # The loop is just a means to an end; the insight is in the plot.

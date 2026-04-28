@@ -37,3 +37,19 @@ Lecture4/archive/diagrams/join-semi.png
 Lecture4/archive/diagrams/join-setup.png
 Lecture4/archive/diagrams/join-setup2.png
 Lecture4/archive/diagrams/relational-nycflights.png
+
+# Grading pipeline
+staging/
+.env
+grading/grades_*.csv
+grading/grades_*.md
+grading/submission_status_*.csv
+__pycache__/
+*.pyc
+grading/
+classroster/}
+classroster/
+Solutions/
+CLAUDE.md
+.Rprofile
+README.md
